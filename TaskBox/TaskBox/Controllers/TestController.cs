@@ -2,6 +2,7 @@
 using TaskBox.Shared.Models;
 using DatabaseConnection.Services;
 using DatabaseConnection.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TaskBox.Controllers
 {
@@ -48,6 +49,33 @@ namespace TaskBox.Controllers
 			List<UserProject> result = _databaseConnection.Select<UserProject>(request);
 
 			return Ok(result);
+		}
+
+		[HttpGet("TestDatabase3")]
+		public IActionResult GetThree()
+		{
+			InsertRequest noteInsert = new InsertRequest("tblNote");
+			Note newNote = new Note("Hello, This is a test note for a test Project");
+
+			_databaseConnection.Insert<Note>(noteInsert, newNote);
+
+			SelectRequest noteSelect = new SelectRequest("tblNote");
+			noteSelect.AddData("tblNote", "NoteId", "Id");
+			noteSelect.AddWhere("Description", newNote.Description);
+
+			int NoteCode = _databaseConnection.Select<Note>(noteSelect)[0].Id;
+
+
+			InsertRequest request = new InsertRequest("tblProject");
+
+			request.AddData("Name", "Test Project");
+			request.AddData("Start", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+			request.AddData("Due", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+			request.AddData("NoteCode", NoteCode);
+
+			_databaseConnection.Insert(request);
+
+			return Ok();
 		}
 	}
 }

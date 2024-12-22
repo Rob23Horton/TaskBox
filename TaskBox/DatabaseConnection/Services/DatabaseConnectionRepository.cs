@@ -8,6 +8,8 @@ using MySqlConnector;
 using System.Security.Cryptography;
 using System.Collections;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using DatabaseConnection.Attributes;
 
 namespace DatabaseConnection.Services
 {
@@ -41,7 +43,7 @@ namespace DatabaseConnection.Services
 			}
 			catch
 			{
-				Console.WriteLine("Failed to connect to db");
+				Console.WriteLine($"Failed to connect to database at {DateTime.Now}");
 				return false;
 			}
 		}
@@ -66,7 +68,6 @@ namespace DatabaseConnection.Services
 
 		public List<T> Select<T>(SelectRequest request)
 		{
-			Console.WriteLine("Connecting");
 			if (ConnectToDatabase() == false)
 				return new List<T>();
 
@@ -152,6 +153,101 @@ namespace DatabaseConnection.Services
 			DisconnectFromDatabase();
 
 			return data;
+		}
+
+		public void Insert(InsertRequest request)
+		{
+
+
+			string query = $"INSERT INTO {request.Table} ";
+
+			string valueNames = "(";
+			string values = "(";
+
+
+			foreach (InsertData insertData in request.Data)
+			{
+				valueNames += $"{insertData.ValueName}, ";
+
+				object value = insertData.Value;
+
+				if (value is string strVal)
+				{
+					values += $"'{strVal}', ";
+				}
+				else if (value is int intVal)
+				{
+					values += $"{intVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					values += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+			}
+
+			valueNames = $"{valueNames.Substring(0, valueNames.Length - 2)})";
+			values = $"{values.Substring(0, values.Length - 2)})";
+
+			query += $"{valueNames} VALUES {values};";
+
+			Console.WriteLine(query);
+
+			if (ConnectToDatabase() == false)
+				return;
+
+			MySqlCommand cmd = new MySqlCommand(query, _connection);
+			cmd.ExecuteNonQuery();
+
+			DisconnectFromDatabase();
+		}
+
+		public void Insert<T>(InsertRequest request, T insertData)
+		{
+			string query = $"INSERT INTO {request.Table} ";
+
+			string valueNames = "(";
+			string values = "(";
+
+			Type tType = typeof(T);
+			PropertyInfo[] propertyInfo = tType.GetProperties();
+
+			foreach (PropertyInfo currentPropertyInfo in propertyInfo)
+			{
+				if (Attribute.IsDefined(currentPropertyInfo, typeof(InsertIgnore)))
+				{
+					continue;
+				}
+
+				valueNames += $"{currentPropertyInfo.Name}, ";
+
+				object value = currentPropertyInfo.GetValue(insertData)!;
+
+				if (value is string strVal)
+				{
+					values += $"'{strVal}', ";
+				}
+				else if (value is int intVal)
+				{
+					values += $"{intVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					values += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+			}
+
+			valueNames = $"{valueNames.Substring(0, valueNames.Length - 2)})";
+			values = $"{values.Substring(0, values.Length - 2)})";
+
+			query += $"{valueNames} VALUES {values};";
+
+			if (ConnectToDatabase() == false)
+				return;
+
+			MySqlCommand cmd = new MySqlCommand(query, _connection);
+			cmd.ExecuteNonQuery();
+
+			DisconnectFromDatabase();
 		}
 	}
 }

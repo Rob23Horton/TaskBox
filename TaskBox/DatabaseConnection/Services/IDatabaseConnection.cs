@@ -10,5 +10,7 @@ namespace DatabaseConnection.Services
 	public interface IDatabaseConnection
 	{
 		public List<T> Select<T>(SelectRequest request);
+		public void Insert(InsertRequest request);
+		public void Insert<T>(InsertRequest request, T insertData);
 	}
 }

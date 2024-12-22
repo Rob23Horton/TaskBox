@@ -17,6 +17,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseConnection", "TaskBox\DatabaseConnection\DatabaseConnection.csproj", "{BA717A9F-9D5D-45EA-9DD3-37FECE51BF16}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskBox.Shared", "TaskBox\TaskBox.Shared\TaskBox.Shared.csproj", "{A019B984-7E39-4CAE-B978-5E9EEC7B4B4E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BA717A9F-9D5D-45EA-9DD3-37FECE51BF16} = {BA717A9F-9D5D-45EA-9DD3-37FECE51BF16}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
