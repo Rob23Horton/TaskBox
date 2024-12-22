@@ -9,9 +9,6 @@ namespace TaskBox.Controllers
 	[Route("api")]
 	public class ApiController : Controller
 	{
-		private static readonly string[] Summaries = new[]
-		{"Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"};
-
 		private readonly IDatabaseConnection _databaseConnection;
 
 		public ApiController(IDatabaseConnection _databaseConnection)
@@ -20,11 +17,37 @@ namespace TaskBox.Controllers
 		}
 
 		[HttpGet("TestDatabase")]
-		public string Get()
+		public IActionResult Get()
 		{
-			SelectRequest request = new SelectRequest();
+			SelectRequest request = new SelectRequest("tblUser");
+			request.AddData("tblUser", "UserId", "Id");
+			request.AddData("UserName");
+			request.AddData("Password");
 
-			return "Finished";
+			request.AddWhere("UserId", 1);
+
+			List<User> result = _databaseConnection.Select<User>(request);
+
+			return Ok(result);
+		}
+
+		[HttpGet("TestDatabase2")]
+		public IActionResult GetTwo()
+		{
+			SelectRequest request = new SelectRequest("tblUser");
+			request.AddData("tblProjectUser", "ProjectUserId", "Id");
+			request.AddData("tblUser", "UserName");
+			request.AddData("tblUser", "UserId", "UserId");
+			request.AddData("tblProjectUser", "ProjectCode", "ProjectId");
+			request.AddData("tblProjectUser", "Permission");
+
+			request.AddJoin("tblUser", "UserId", "tblProjectUser", "UserCode");
+
+			request.AddWhere("tblUser", "UserId", 1);
+
+			List<UserProject> result = _databaseConnection.Select<UserProject>(request);
+
+			return Ok(result);
 		}
 	}
 }

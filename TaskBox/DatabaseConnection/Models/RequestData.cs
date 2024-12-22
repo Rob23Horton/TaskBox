@@ -8,25 +8,22 @@ namespace DatabaseConnection.Models
 {
 	public class RequestData
 	{
-		public RequestData(string Table, string ValueName, object Value)
+		public RequestData(string Table, string ValueName)
 		{
 			this.Table = Table;
 			this.ValueName = ValueName;
-			this.Value = Value;
 			this.ParseTo = ValueName;
 		}
 
-		public RequestData(string Table, string ValueName, object Value, string As)
+		public RequestData(string Table, string ValueName, string As)
 		{
 			this.Table = Table;
 			this.ValueName = ValueName;
-			this.Value = Value;
 			this.ParseTo = As;
 		}
 
 		public string Table { get; set; }
 		public string ParseTo { get; set; }
 		public string ValueName { get; set; }
-		public object Value { get; set; }
 	}
 }

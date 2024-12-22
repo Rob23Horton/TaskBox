@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaskBox.Shared.Helpers
+namespace TaskBox.Shared.Models
 {
 	public class User
 	{
 		public User()
 		{
-			this.UserName = "";
-			this.Password = "";
+			UserName = "";
+			Password = "";
 		}
 
 		public User(int Id, string UserName, string Password)
@@ -22,7 +22,7 @@ namespace TaskBox.Shared.Helpers
 		}
 
 		public int Id { get; set; }
-		public string UserName {  get; set; }
+		public string UserName { get; set; }
 		public string Password { get; set; }
 	}
 }
