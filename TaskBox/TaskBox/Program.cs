@@ -4,6 +4,8 @@ using DatabaseConnection.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TaskBox.Interfaces;
 using TaskBox.Repositories;
+using Microsoft.AspNetCore.Components.Authorization;
+using TaskBox.Components.Account;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +33,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, PersistingServerAuthenticationStateProvider>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

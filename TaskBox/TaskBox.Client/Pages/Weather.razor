@@ -5,6 +5,16 @@
 
 <h1>Weather</h1>
 
+<AuthorizeView>
+    <Authorized>
+        <button @onclick="DisplayGreeting">Greet</button>
+    </Authorized>
+    <NotAuthorized>
+        HA YOU'RE NOT AUTHORIZED
+    </NotAuthorized>
+</AuthorizeView>
+
+
 <p>This component demonstrates showing data.</p>
 
 @if (forecasts == null)
@@ -39,6 +49,9 @@ else
 @code {
     private WeatherForecast[]? forecasts;
 
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         // Simulate asynchronous loading to demonstrate a loading indicator
@@ -52,5 +65,13 @@ else
             TemperatureC = Random.Shared.Next(-20, 55),
             Summary = summaries[Random.Shared.Next(summaries.Length)]
         }).ToArray();
+    }
+
+    private async Task DisplayGreeting()
+    {
+        var authenticationState = await authenticationStateTask;
+        var message = $"Hello, {authenticationState.User.Identity.Name}";
+
+        Console.WriteLine(message);
     }
 }
