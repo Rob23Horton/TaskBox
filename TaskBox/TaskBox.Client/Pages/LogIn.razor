@@ -1,0 +1,40 @@
+﻿@page "/login"
+
+@inject HttpClient httpClient;
+@inject NavigationManager navManager;
+
+<PageTitle>Log In</PageTitle>
+
+<div>
+	<div>
+		<InputText @bind-Value="@userName" placeholder="User Name"></InputText>
+		<InputText @bind-Value="@password" placeholder="Password"></InputText>
+		<button @onclick="Authenticate">Submit</button>
+	</div>
+	<div id="error-message">
+		<span>@errorMessage</span>
+	</div>
+</div>
+
+
+@code {
+
+	private string errorMessage { get; set; }
+
+	private string userName { get; set; }
+	private string password { get; set; }
+
+	public async Task Authenticate()
+	{
+		bool authenticated = await httpClient.GetFromJsonAsync<bool>($"http://localhost:5036/api/User/LogIn?UserName={userName}&Password={password}");
+
+		if (authenticated)
+		{
+			navManager.NavigateTo("/");
+		}
+
+		errorMessage = "Invalid Credentials.\nPlease Try again.";
+		StateHasChanged();
+	}
+
+}

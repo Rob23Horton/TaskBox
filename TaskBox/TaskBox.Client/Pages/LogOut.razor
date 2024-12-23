@@ -1,0 +1,17 @@
+﻿@page "/logout";
+
+@inject HttpClient httpClient;
+
+<div>
+	<span>You have been logged out!</span>
+</div>
+
+@code
+{
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+
+		await httpClient.GetAsync("http://localhost:5036/api/User/LogOut");
+	}
+}
