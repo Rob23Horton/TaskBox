@@ -27,9 +27,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.Cookie.Name = "auth_token";
-        options.LoginPath = "/login";
+        options.LoginPath = "/access-denied";
         options.Cookie.MaxAge = TimeSpan.FromMinutes(30);
-        options.AccessDeniedPath = "/access-denided";
+        options.AccessDeniedPath = "/access-denied";
     });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
@@ -59,6 +59,6 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(TaskBox.Client._Imports).Assembly);
+	.AddAdditionalAssemblies(typeof(TaskBox.Client._Imports).Assembly);
 
 app.Run();

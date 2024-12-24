@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
 using TaskBox.Shared.Models;
+using System.Security.Claims;
 
 namespace TaskBox.Components.Account
 {
@@ -14,7 +15,6 @@ namespace TaskBox.Components.Account
 	internal sealed class PersistingServerAuthenticationStateProvider : ServerAuthenticationStateProvider, IDisposable
 	{
 		private readonly PersistentComponentState state;
-		private readonly IdentityOptions options;
 
 		private readonly PersistingComponentStateSubscription subscription;
 
@@ -25,7 +25,6 @@ namespace TaskBox.Components.Account
 			IOptions<IdentityOptions> optionsAccessor)
 		{
 			state = persistentComponentState;
-			options = optionsAccessor.Value;
 
 			AuthenticationStateChanged += OnAuthenticationStateChanged;
 			subscription = state.RegisterOnPersisting(OnPersistingAsync);
@@ -48,8 +47,9 @@ namespace TaskBox.Components.Account
 
 			if (principal.Identity?.IsAuthenticated == true)
 			{
-				var userId = principal.FindFirst(options.ClaimsIdentity.UserIdClaimType)?.Value;
-				var userName = principal.FindFirst(options.ClaimsIdentity.UserNameClaimType)?.Value;
+				//Gets the current claims values and then syncs them to the client
+				var userId = principal.FindFirst(ClaimTypes.Sid)?.Value;
+				var userName = principal.FindFirst(ClaimTypes.Name)?.Value;
 
 				if (userId != null && userName != null)
 				{

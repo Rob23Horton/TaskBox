@@ -1,6 +1,8 @@
 ﻿@page "/weather"
 @using TaskBox.Shared.Models;
 
+@inject AuthenticationStateProvider authenticationStateProvider;
+
 <PageTitle>Weather</PageTitle>
 
 <h1>Weather</h1>
@@ -49,9 +51,6 @@ else
 @code {
     private WeatherForecast[]? forecasts;
 
-    [CascadingParameter]
-    private Task<AuthenticationState> authenticationStateTask { get; set; }
-
     protected override async Task OnInitializedAsync()
     {
         // Simulate asynchronous loading to demonstrate a loading indicator
@@ -69,8 +68,8 @@ else
 
     private async Task DisplayGreeting()
     {
-        var authenticationState = await authenticationStateTask;
-        var message = $"Hello, {authenticationState.User.Identity.Name}";
+        AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+        string message = $"Hello, {authenticationState.User.Identity.Name}";
 
         Console.WriteLine(message);
     }

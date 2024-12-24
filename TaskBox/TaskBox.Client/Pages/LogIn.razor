@@ -30,7 +30,7 @@
 
 		if (authenticated)
 		{
-			navManager.NavigateTo("/");
+			navManager.NavigateTo("/", forceLoad: true);
 		}
 
 		errorMessage = "Invalid Credentials.\nPlease Try again.";

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TaskBox.Interfaces;
 using TaskBox.Shared.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace TaskBox.Controllers
 {
@@ -34,12 +35,12 @@ namespace TaskBox.Controllers
 					return Ok(false);
 				}
 
-				var claims = new List<Claim>{
-					new Claim(ClaimTypes.Sid, user.Id.ToString()),
-					new Claim(ClaimTypes.Name, user.UserName)
-				};
+				var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
 
-				var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+				identity.AddClaim(new Claim(ClaimTypes.Sid, user.Id.ToString()));
+				identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+				identity.AddClaim(new Claim(ClaimTypes.Role, "User"));
+
 				var principal = new ClaimsPrincipal(identity);
 				await HttpContext.SignInAsync(principal);
 

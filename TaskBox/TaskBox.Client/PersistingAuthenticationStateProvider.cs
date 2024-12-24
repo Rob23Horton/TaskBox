@@ -30,7 +30,8 @@ namespace TaskBox.Client
 
 			Claim[] claims = [
 				new Claim(ClaimTypes.Sid, userInfo.Id.ToString()),
-				new Claim(ClaimTypes.Name, userInfo.UserName)];
+				new Claim(ClaimTypes.Name, userInfo.UserName),
+				new Claim(ClaimTypes.Role, "User")];
 
 			authenticationStateTask = Task.FromResult(
 				new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims,
