@@ -1,5 +1,7 @@
 ﻿@page "/login"
 
+@using TaskBox.Shared.Models;
+
 @inject HttpClient httpClient;
 @inject NavigationManager navManager;
 
@@ -24,9 +26,12 @@
 	private string userName { get; set; }
 	private string password { get; set; }
 
-	public async Task Authenticate()
+	public async void Authenticate()
 	{
-		bool authenticated = await httpClient.GetFromJsonAsync<bool>($"http://localhost:5036/api/User/LogIn?UserName={userName}&Password={password}");
+		//Sends authentication check to server api
+		UserLogin details = new UserLogin(userName, password);
+		HttpResponseMessage jsonAuth = await httpClient.PostAsJsonAsync<UserLogin>("api/User/LogIn", details);
+		bool authenticated = await jsonAuth.Content.ReadFromJsonAsync<bool>();
 
 		if (authenticated)
 		{

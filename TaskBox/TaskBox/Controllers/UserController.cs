@@ -19,14 +19,14 @@ namespace TaskBox.Controllers
 			this.userRepository = userRepository;
 		}
 
-		[HttpGet("LogIn")]
+		[HttpPost("LogIn")]
 		[ProducesResponseType(200, Type=typeof(bool))]
 		[ProducesResponseType(400, Type=typeof(bool))]
-		public async Task<IActionResult> CheckUserCredentials(string UserName, string Password)
+		public async Task<IActionResult> CheckUserCredentials(UserLogin loginAttempt)
 		{
 			try
 			{
-				User? user = userRepository.CheckUserCredentials(UserName, Password);
+				User? user = userRepository.CheckUserCredentials(loginAttempt.UserName, loginAttempt.Password);
 
 				if (user is null)
 				{
