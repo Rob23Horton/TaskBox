@@ -1,0 +1,45 @@
+﻿@page "/login"
+
+@using TaskBox.Shared.Models;
+
+@inject HttpClient httpClient;
+@inject NavigationManager navManager;
+
+<PageTitle>Log In</PageTitle>
+
+<div>
+	<div>
+		<InputText @bind-Value="@userName" placeholder="User Name"></InputText>
+		<InputText @bind-Value="@password" placeholder="Password"></InputText>
+		<button @onclick="Authenticate">Submit</button>
+	</div>
+	<div id="error-message">
+		<span>@errorMessage</span>
+	</div>
+</div>
+
+
+@code {
+
+	private string errorMessage { get; set; }
+
+	private string userName { get; set; }
+	private string password { get; set; }
+
+	public async void Authenticate()
+	{
+		//Sends authentication check to server api
+		UserLogin details = new UserLogin(userName, password);
+		HttpResponseMessage jsonAuth = await httpClient.PostAsJsonAsync<UserLogin>("api/User/LogIn", details);
+		bool authenticated = await jsonAuth.Content.ReadFromJsonAsync<bool>();
+
+		if (authenticated)
+		{
+			navManager.NavigateTo("/", forceLoad: true);
+		}
+
+		errorMessage = "Invalid Credentials.\nPlease Try again.";
+		StateHasChanged();
+	}
+
+}

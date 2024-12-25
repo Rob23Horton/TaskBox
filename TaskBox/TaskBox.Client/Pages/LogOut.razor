@@ -1,0 +1,26 @@
+﻿@page "/logout";
+
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "User")]
+
+@inject HttpClient httpClient;
+@inject NavigationManager navManager;
+
+@code
+{
+	protected override async Task OnInitializedAsync()
+	{
+		PreformLogOut();
+
+		await base.OnInitializedAsync();
+	}
+
+	private async void PreformLogOut()
+	{
+		//Logs out through api request
+		await httpClient.GetAsync("http://localhost:5036/api/User/LogOut");
+
+		//Dirty trick to make the cache update for pages
+		navManager.NavigateTo("/", forceLoad: true);
+	}
+}

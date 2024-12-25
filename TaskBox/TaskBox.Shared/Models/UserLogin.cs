@@ -3,25 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DatabaseConnection.Attributes;
 
 namespace TaskBox.Shared.Models
 {
-	public class User
+	public class UserLogin
 	{
-		public User()
+
+		public UserLogin()
 		{
-			UserName = "";
+			this.UserName = "";
+			this.Password = "";
 		}
 
-		public User(int Id, string UserName, string Password)
+		public UserLogin(string UserName, string Password)
 		{
-			this.Id = Id;
 			this.UserName = UserName;
+			this.Password = Password;
 		}
 
-		[InsertIgnore]
-		public int Id { get; set; }
 		public string UserName { get; set; }
+		public string Password { get; set; }
 	}
 }
