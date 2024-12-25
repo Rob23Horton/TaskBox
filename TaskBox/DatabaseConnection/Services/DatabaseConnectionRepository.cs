@@ -211,13 +211,8 @@ namespace DatabaseConnection.Services
 			Type tType = typeof(T);
 			PropertyInfo[] propertyInfo = tType.GetProperties();
 
-			foreach (PropertyInfo currentPropertyInfo in propertyInfo)
+			foreach (PropertyInfo currentPropertyInfo in propertyInfo.Where(p => !Attribute.IsDefined(p, typeof(InsertIgnore))))
 			{
-				if (Attribute.IsDefined(currentPropertyInfo, typeof(InsertIgnore)))
-				{
-					continue;
-				}
-
 				valueNames += $"{currentPropertyInfo.Name}, ";
 
 				object value = currentPropertyInfo.GetValue(insertData)!;
