@@ -1,0 +1,79 @@
+﻿@page "/create-account"
+
+@inject HttpClient httpClient;
+@inject NavigationManager navManager;
+
+<PageTitle>Create Account</PageTitle>
+
+<div>
+	<h1>Create Account</h1>
+	<div>
+		<InputText @bind-Value="@userName" placeholder="User Name"></InputText>
+		<InputText @bind-Value="@password" placeholder="Password"></InputText>
+		<InputText @bind-Value="@passwordRetype" placeholder="Password Retype"></InputText>
+		<button @onclick="Create">Submit</button>
+	</div>
+	<div id="error-message">
+		<span>@errorMessage</span>
+	</div>
+	<span>Already have an account? <a href="/login">Log In!</a></span>
+</div>
+
+
+@code {
+
+	private string userName { get; set; }
+	private string password { get; set; }
+	private string passwordRetype { get; set; }
+
+	private string errorMessage { get; set; }
+
+	protected override void OnInitialized()
+	{
+
+
+		base.OnInitialized();
+	}
+
+
+	private async void Create()
+	{
+		if (string.IsNullOrEmpty(userName)){
+			errorMessage = "User Name must be filled in!";
+			return;
+		}
+		else if (string.IsNullOrEmpty(password))
+		{
+			errorMessage = "Password must be filled in!";
+			return;
+		}
+		else if (string.IsNullOrEmpty(passwordRetype)){
+			errorMessage = "Password Retype must be filled in!";
+			return;
+		}
+		else if (password != passwordRetype){
+			errorMessage = "Password and Password Retype must be the same!";
+			return;
+		}
+
+		UserLogin newUser = new UserLogin(userName, password);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<UserLogin>("/api/User/CreateAccount", newUser);
+
+		if (response.StatusCode != System.Net.HttpStatusCode.OK)
+		{
+			errorMessage = "Something went wrong. Please try again later!";
+			return;
+		}
+
+		ApiResponse apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (apiResponse.Success)
+		{
+			navManager.NavigateTo("/login");
+			return;
+		}
+
+		errorMessage = apiResponse.Message;
+	}
+}

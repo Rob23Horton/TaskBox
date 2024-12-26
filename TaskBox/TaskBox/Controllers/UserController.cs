@@ -66,5 +66,22 @@ namespace TaskBox.Controllers
 				return BadRequest();
 			}
 		}
+
+
+		[HttpPost("CreateAccount")]
+		[ProducesResponseType(200, Type=typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult CreateAccount(UserLogin user)
+		{
+			try
+			{
+				return Ok(userRepository.CreateAccount(user.UserName, user.Password));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+
+		}
 	}
 }

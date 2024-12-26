@@ -1,13 +1,12 @@
 ﻿@page "/login"
 
-@using TaskBox.Shared.Models;
-
 @inject HttpClient httpClient;
 @inject NavigationManager navManager;
 
 <PageTitle>Log In</PageTitle>
 
 <div>
+	<h1>Log In</h1>
 	<div>
 		<InputText @bind-Value="@userName" placeholder="User Name"></InputText>
 		<InputText @bind-Value="@password" placeholder="Password"></InputText>
@@ -16,6 +15,7 @@
 	<div id="error-message">
 		<span>@errorMessage</span>
 	</div>
+	<span>Don't have an account? <a href="/create-account">Create one!</a></span>
 </div>
 
 
@@ -28,6 +28,17 @@
 
 	public async void Authenticate()
 	{
+		if (string.IsNullOrEmpty(userName))
+		{
+			errorMessage = "User Name must be filled in!";
+			return;
+		}
+		else if (string.IsNullOrEmpty(password))
+		{
+			errorMessage = "Password must be filled in!";
+			return;
+		}
+
 		//Sends authentication check to server api
 		UserLogin details = new UserLogin(userName, password);
 		HttpResponseMessage jsonAuth = await httpClient.PostAsJsonAsync<UserLogin>("api/User/LogIn", details);

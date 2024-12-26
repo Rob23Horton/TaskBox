@@ -31,5 +31,55 @@ namespace TaskBox.Repositories
 
 			return users[0];
 		}
+
+		private bool UserExists(string UserName)
+		{
+			SelectRequest userRequest = new SelectRequest("tblUser");
+			userRequest.AddData("UserName");
+
+			userRequest.AddWhere("UserName", UserName);
+
+			List<User> user = _databaseConnection.Select<User>(userRequest);
+
+			if (user.Count() == 0)
+			{
+				return false;
+			}
+
+			return true;
+
+		}
+
+
+		public ApiResponse CreateAccount(string UserName, string Password)
+		{
+			ApiResponse response = new ApiResponse();
+
+			if (UserExists(UserName))
+			{
+				response.Success = false;
+				response.Message = "User Already Exists!";
+				return response;
+			}
+
+			try
+			{
+				InsertRequest userInsert = new InsertRequest("tblUser");
+
+				UserLogin newUser = new UserLogin(UserName, Password);
+				_databaseConnection.Insert<UserLogin>(userInsert, newUser);
+
+				response.Success = true;
+				response.Message = "Account created successfully!";
+			}
+			catch
+			{
+				response.Success = false;
+				response.Message = "An error occured. Please try again later!";
+			}
+
+
+			return response;
+		}
 	}
 }
