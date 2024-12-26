@@ -1,0 +1,51 @@
+﻿@page "/project-page/{ProjectId}"
+
+@using Microsoft.AspNetCore.Authorization;
+@using System.Security.Claims;
+
+@attribute [Authorize(Roles = "User")]
+
+@inject AuthenticationStateProvider authenticationStateProvider;
+@inject NavigationManager navManager;
+
+<h3>ProjectPage</h3>
+
+@code
+{
+	[Parameter]
+	public string ProjectId { 
+		get{
+			return this.Id.ToString();
+		}
+		set {
+			int.TryParse(value, out int id);
+			this.Id = id;
+		}
+	}
+	private int Id { get; set; }
+
+	private int UserId { get; set;}
+
+	protected override async void OnInitialized()
+	{
+		//Gets the User Id from the authenticationStateProvider
+		AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+		Claim userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
+
+		if (userIdClaim == default)
+		{
+			navManager.NavigateTo("/access-denied");
+			return;
+		}
+
+		//Parses UserId from string to int
+		int.TryParse(userIdClaim.Value, out int userId);
+		this.UserId = userId;
+
+
+		//TODO - Call API to check if user is allowed to do this project
+
+		base.OnInitialized();
+	}
+
+}
