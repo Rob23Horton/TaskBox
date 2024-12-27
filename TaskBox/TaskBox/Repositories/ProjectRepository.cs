@@ -37,5 +37,28 @@ namespace TaskBox.Repositories
 				return false;
 			}
 		}
+
+		public Project GetProject(int ProjectId)
+		{
+			SelectRequest projectRequest = new SelectRequest("tblProject");
+			projectRequest.AddData("tblProject", "ProjectId", "Id");
+			projectRequest.AddData("tblProject", "Name");
+			projectRequest.AddData("tblProject", "Start");
+			projectRequest.AddData("tblProject", "Due");
+			projectRequest.AddData("tblNote", "Description");
+
+			projectRequest.AddJoin("tblProject", "NoteCode", "tblNote", "NoteId");
+
+			projectRequest.AddWhere("tblProject", "ProjectId", ProjectId);
+
+			List<Project> project = _databaseConnection.Select<Project>(projectRequest);
+
+			if (project.Count() == 0)
+			{
+				throw new Exception();
+			}
+
+			return project[0];
+		}
 	}
 }

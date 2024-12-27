@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TaskBox.Interfaces;
+using TaskBox.Shared.Models;
 
 namespace TaskBox.Controllers
 {
@@ -26,6 +27,23 @@ namespace TaskBox.Controllers
 			{
 				return BadRequest(false);
 			}
+		}
+
+
+		[HttpGet("GetProject")]
+		[ProducesResponseType(200, Type=typeof(Project))]
+		[ProducesResponseType(400)]
+		public IActionResult GetProjectDetails(int ProjectId)
+		{
+			try
+			{
+				return Ok(_projectRepository.GetProject(ProjectId));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+
 		}
 	}
 }

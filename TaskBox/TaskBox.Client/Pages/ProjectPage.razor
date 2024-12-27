@@ -12,7 +12,16 @@
 	</NotAuthorized>
 </AuthorizeView>
 
-<h3>ProjectPage</h3>
+<div>
+	<h1>@ProjectDetails.Name</h1>
+
+	<div>
+		<span>
+			@ProjectDetails.Description
+		</span>
+	</div>
+
+</div>
 
 
 
@@ -29,8 +38,9 @@
 		}
 	}
 	private int Id { get; set; }
-
 	private int UserId { get; set;}
+
+	private Project ProjectDetails { get; set; } = new Project();
 
 	protected override async void OnInitialized()
 	{
@@ -58,6 +68,16 @@
 			return;
 		}
 
+		try
+		{
+			//Gets the project details from API
+			ProjectDetails = await httpClient.GetFromJsonAsync<Project>($"/api/Project/GetProject?ProjectId={Id}");
+			StateHasChanged();
+		}
+		catch
+		{
+			navManager.NavigateTo("/not-existant");
+		}
 
 		base.OnInitialized();
 	}
