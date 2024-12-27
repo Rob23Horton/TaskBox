@@ -41,13 +41,13 @@
 	private int UserId { get; set;}
 
 	private Project ProjectDetails { get; set; } = new Project();
+	private List<Segment> SegmentDetails { get; set; } = new List<Segment>();
 
 	protected override async void OnInitialized()
 	{
 		//Gets the User Id from the authenticationStateProvider
 		AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
 		Claim userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
-
 		if (userIdClaim == default)
 		{
 			navManager.NavigateTo("/access-denied");
@@ -61,7 +61,6 @@
 
 		//Calls API to check if user is allowed to do this project
 		bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Project/CheckPermission?UserId={UserId}&ProjectId={Id}");
-
 		if (permission == false)
 		{
 			navManager.NavigateTo("/access-denied");
@@ -78,6 +77,19 @@
 		{
 			navManager.NavigateTo("/not-existant");
 		}
+
+		//Get segments and puts it in SegmentDetails
+		List<Segment> segments;
+		try
+		{
+			segments = await httpClient.GetFromJsonAsync<List<Segment>>($"/api/Segment/SegmentsFromProjectId?ProjectId={Id}");
+		}
+		catch
+		{
+			segments = new List<Segment>();
+		}
+		SegmentDetails = segments;
+
 
 		base.OnInitialized();
 	}

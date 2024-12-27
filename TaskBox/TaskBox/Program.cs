@@ -19,6 +19,7 @@ builder.Services.AddScoped<IDatabaseConnection, DatabaseConnectionRepository>();
 //Adds Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<ISegmentRepository, SegmentRepository>();
 
 //Adds API Controllers
 builder.Services.AddControllers();
