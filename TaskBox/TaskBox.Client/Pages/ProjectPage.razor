@@ -1,14 +1,20 @@
 ﻿@page "/project-page/{ProjectId}"
 
-@using Microsoft.AspNetCore.Authorization;
 @using System.Security.Claims;
-
-@attribute [Authorize(Roles = "User")]
 
 @inject AuthenticationStateProvider authenticationStateProvider;
 @inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+<AuthorizeView>
+	<NotAuthorized>
+		<RedirectToLogin />
+	</NotAuthorized>
+</AuthorizeView>
 
 <h3>ProjectPage</h3>
+
+
 
 @code
 {
@@ -43,7 +49,15 @@
 		this.UserId = userId;
 
 
-		//TODO - Call API to check if user is allowed to do this project
+		//Calls API to check if user is allowed to do this project
+		bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Project/CheckPermission?UserId={UserId}&ProjectId={Id}");
+
+		if (permission == false)
+		{
+			navManager.NavigateTo("/access-denied");
+			return;
+		}
+
 
 		base.OnInitialized();
 	}

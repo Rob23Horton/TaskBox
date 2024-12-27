@@ -1,10 +1,13 @@
 ﻿@page "/logout";
 
-@using Microsoft.AspNetCore.Authorization;
-@attribute [Authorize(Roles = "User")]
-
 @inject HttpClient httpClient;
 @inject NavigationManager navManager;
+
+<AuthorizeView>
+	<NotAuthorized>
+		<RedirectToLogin />
+	</NotAuthorized>
+</AuthorizeView>
 
 @code
 {
