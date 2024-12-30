@@ -12,6 +12,43 @@
 	</NotAuthorized>
 </AuthorizeView>
 
+<style>
+	.chart-period {
+	background-color: #708090 !important;
+	border-bottom: 2px solid #000;
+	grid-template-columns: 50px repeat( @((MarkupString)(NumOfDays + 1).ToString()), 1fr);
+	z-index: 1;
+	}
+
+	.chart-lines {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	background-color: transparent;
+	grid-template-columns: 50px repeat( @((MarkupString)(NumOfDays + 1).ToString()), 1fr);
+	}
+
+	.chart-row-bars {
+	list-style: none;
+	display: grid;
+	padding: 15px 0;
+	margin: 0;
+	grid-gap: 10px 0;
+	border-bottom: 1px solid #000;
+	}
+
+	.chart-row {
+	display: grid;
+	grid-template-columns: 50px repeat( @((MarkupString)(NumOfDays + 1).ToString()), 1fr);
+	background-color: #DCDCDC;
+	}
+
+	.chart-row:nth-child(odd) {
+	background-color: #C0C0C0;
+	}
+</style>
+
+
 <div>
 	<h1>@ProjectDetails.Name</h1>
 
@@ -21,6 +58,51 @@
 		</span>
 	</div>
 
+	<div>
+		@if (SegmentDetails.Count() > 0)
+		{
+		<div class="container">
+			<div class="chart">
+				<div class="chart-row chart-period">
+					<div class="chart-row-item"></div>
+					@for (int i = 0; i < NumOfDays + 1; i++)
+					{
+						DateTime date = FirstStart.AddDays((double)i);
+						@if (date.Date == DateTime.Today) {
+							<span class="today">@((MarkupString)date.Day.ToString())</span>
+						}
+						else if (date.Day == 1){
+							<span>@((MarkupString)date.ToString("d MMM"))</span>
+						}
+						else{
+							<span>@((MarkupString)date.Day.ToString())</span>
+						}
+					}
+				</div>
+				<div class="chart-row chart-lines">
+					@for (int i = 0; i < NumOfDays + 1; i++){
+						<span></span>
+					}
+				</div>
+				@foreach (Segment segment in SegmentDetails)
+				{
+
+					int fromStart = GetDays(FirstStart, segment.Start) + 2;
+					int length = GetDays(segment.Start, segment.Due);
+					length = length == 0 ? 0 : length + 1;
+
+					<div class="chart-row">
+						<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
+
+						<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
+							<li class="chart-li">@segment.Name</li>
+						</ul>
+					</div>
+				}
+			</div>
+		</div>
+		}
+	</div>
 </div>
 
 
@@ -43,6 +125,9 @@
 	private Project ProjectDetails { get; set; } = new Project();
 	private List<Segment> SegmentDetails { get; set; } = new List<Segment>();
 
+	private int NumOfDays { get; set; } = 0;
+	private DateTime FirstStart { get; set; } = new DateTime();
+
 	protected override async void OnInitialized()
 	{
 		//Gets the User Id from the authenticationStateProvider
@@ -60,10 +145,16 @@
 
 
 		//Calls API to check if user is allowed to do this project
-		bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Project/CheckPermission?UserId={UserId}&ProjectId={Id}");
-		if (permission == false)
+		try
 		{
-			navManager.NavigateTo("/access-denied");
+			bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Project/CheckPermission?UserId={UserId}&ProjectId={Id}");
+			if (permission == false)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+		}
+		catch{
 			return;
 		}
 
@@ -71,7 +162,6 @@
 		{
 			//Gets the project details from API
 			ProjectDetails = await httpClient.GetFromJsonAsync<Project>($"/api/Project/GetProject?ProjectId={Id}");
-			StateHasChanged();
 		}
 		catch
 		{
@@ -91,7 +181,35 @@
 		SegmentDetails = segments;
 
 
+		//TODO - Creates Gantt Chart
+
+		NumOfDays = GetTotalDays();
+
+
+		StateHasChanged();
 		base.OnInitialized();
+	}
+
+
+	private int GetTotalDays()
+	{
+		Segment firstStart = SegmentDetails.OrderBy(s => s.Start).FirstOrDefault();
+		Segment lastDue = SegmentDetails.OrderByDescending(s => s.Due).FirstOrDefault();
+
+		if (firstStart == default || lastDue == default)
+		{
+			Console.WriteLine("Return");
+			return 0;
+		}
+
+		FirstStart = firstStart.Start;
+
+		return GetDays(firstStart.Start, lastDue.Due);
+	}
+
+	private int GetDays(DateTime Start, DateTime End)
+	{
+		return (End.Date - Start.Date).Days;
 	}
 
 }

@@ -16,6 +16,8 @@ builder.Services.AddRazorComponents()
 //Adds Database Connection
 builder.Services.AddScoped<IDatabaseConnection, DatabaseConnectionRepository>();
 
+builder.Services.AddScoped<HttpClient>();
+
 //Adds Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
