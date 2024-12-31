@@ -1,0 +1,97 @@
+﻿.no-padding-margin{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+.gantt-container {
+	min-width: 650px;
+	margin: 0 auto;
+}
+
+.chart {
+	display: grid;
+	border: 2px solid #000;
+	position: relative;
+	overflow: visible;
+}
+
+.chart-period > span {
+	text-align: center;
+	font-size: 13px;
+	align-self: center;
+	font-weight: bold;
+	padding: 15px 0;
+}
+
+.chart-lines > span {
+	display: block;
+	border-right: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.chart-row-item {
+	background-color: #808080;
+	border: 1px solid #000;
+	border-top: 0;
+	border-left: 0;
+	padding: 20px 0;
+	font-size: 15px;
+	font-weight: bold;
+	text-align: center;
+}
+
+li {
+	font-weight: 450;
+	text-align: left;
+	font-size: 15px;
+	min-height: 15px;
+	background-color: #708090;
+	padding: 5px 15px;
+	color: #fff;
+	overflow: visible;
+	position: relative;
+	cursor: pointer;
+	border-radius: 15px;
+}
+
+ul .chart-li {
+	background-color: #588BAE;
+}
+
+ul .chart-li-two-a {
+	grid-column: 2/2;
+	background-color: #0080FF;
+}
+
+
+.today{
+	background-color: green;
+}
+
+
+.page{
+	overflow-x: hidden;
+}
+
+.description-container{
+	min-height:15vh;
+}
+
+
+.segment-label-container{
+	grid-column:1;
+}
+
+
+.add-segments-container {
+	grid-column: 2;
+	justify-self: right;
+}
+
+.add-segment-btn{
+	width: 20vw;
+}
+
+.bttm-margin {
+	margin-bottom: 1vh;
+}
