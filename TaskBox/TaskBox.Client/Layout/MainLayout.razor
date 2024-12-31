@@ -6,23 +6,6 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-            <AuthorizeView>
-                <NotAuthorized>
-                    <h1>You are not logged in.</h1>
-                    <a href="/login">Log In</a>
-                </NotAuthorized>
-                <Authorized>
-                    <h1>You are logged in.</h1>
-                    <a href="/logout">Log Out</a>
-                </Authorized>
-            </AuthorizeView>
-            <div>
-                <button type="button" @onclick="Reload">Reload</button>
-            </div>
-        </div>
-
         <article class="content px-4">
             @Body
         </article>

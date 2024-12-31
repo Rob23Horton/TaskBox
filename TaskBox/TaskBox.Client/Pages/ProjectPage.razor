@@ -49,22 +49,27 @@
 </style>
 
 
-<div>
+<div class="d-flex flex-column page">
 	<h1>@ProjectDetails.Name</h1>
 
-	<div>
+	<div class="description-container bttm-margin">
 		<span>
 			@ProjectDetails.Description
 		</span>
 	</div>
-	<div>
-		<button type="button" @onclick="OnShowModalClick">Add Segment</button>
+	<div class="d-grid bttm-margin">
+		<div class="segment-label-container">
+			<label>Segements - </label>
+		</div>
+		<div class="add-segments-container">
+			<button class="add-segment-btn" type="button" @onclick="OnShowModalClick">Add Segment</button>
+		</div>
 	</div>
 
-	<div class="no-padding-margin">
+	<div class="no-padding-margin gantt-chart-container bttm-margin">
 		@if (SegmentDetails.Count() > 0)
 		{
-			<div class="container">
+			<div class="gantt-container">
 				<div class="chart">
 					<div class="chart-row chart-period">
 						<div class="chart-row-item"></div>
@@ -87,7 +92,7 @@
 							<span></span>
 						}
 					</div>
-					@foreach (Segment segment in SegmentDetails)
+					@foreach (Segment segment in SegmentDetails.OrderBy(s => s.Start))
 					{
 
 						int fromStart = GetDays(FirstStart, segment.Start) + 2;
@@ -98,14 +103,14 @@
 							<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
 
 							<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
-								
+
 								<ToolTip>
 									<Tip>
 										<div class='d-flex flex-column'>
 											<label>@segment.Name</label>
 											<label>Description - @(segment.Description.Length > 20? segment.Description.Substring(0, 20) : segment.Description)</label>
-											<label>Start Date - @segment.Start.ToLongDateString()</label>
-											<label>Due Date - @segment.Due.ToLongDateString()</label>
+											<label>Start Date - @segment.Start.ToLongDateString() @segment.Start.ToShortTimeString()</label>
+											<label>Due Date - @segment.Due.ToLongDateString() @segment.Due.ToShortTimeString()</label>
 										</div>
 									</Tip>
 									<Content>
@@ -114,7 +119,6 @@
 										</li>
 									</Content>
 								</ToolTip>
-								
 							</ul>
 						</div>
 					}
@@ -128,10 +132,10 @@
 	<Title>Create Segment</Title>
 	<Body>
 		<div class="d-flex flex-column">
-			<div class="form-control w-100">
+			<div class="w-100">
 				<InputText class="w-100" placeholder="Segment Name (Max 24 chars)" maxlength="24" @bind-Value="@NewSegmentDetails.Name" />
 			</div>
-			<div class="form-control w-100">
+			<div class="w-100">
 				<InputTextArea class="w-100" placeholder="Description" @bind-Value="@NewSegmentDetails.Description" />
 			</div>
 			<div class="form-control d-flex flex-column">
@@ -276,6 +280,32 @@
 	private async void AddSegment()
 	{
 		NewSegmentDetails.OwnerProject = Id;
+
+		//Validation on Modal
+		if (string.IsNullOrWhiteSpace(NewSegmentDetails.Name))
+		{
+			errorMessage = "Name cannot be blank!";
+			StateHasChanged();
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(NewSegmentDetails.Description))
+		{
+			errorMessage = "Description cannot be blank!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewSegmentDetails.Start > NewSegmentDetails.Due)
+		{
+			errorMessage = "Due date cannot be before start date!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewSegmentDetails.Start < DateTime.Now.AddYears(-1))
+		{
+			errorMessage = "Start date cannot be more than a year ago!";
+			StateHasChanged();
+			return;
+		}
 
 		SegmentAndUser newSegment = new SegmentAndUser(UserId, NewSegmentDetails);
 

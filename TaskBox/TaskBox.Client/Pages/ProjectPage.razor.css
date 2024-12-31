@@ -4,8 +4,7 @@
 	box-sizing: border-box;
 }
 
-.container {
-	max-width: 1200px;
+.gantt-container {
 	min-width: 650px;
 	margin: 0 auto;
 }
@@ -65,7 +64,34 @@ ul .chart-li-two-a {
 }
 
 
-
 .today{
 	background-color: green;
+}
+
+
+.page{
+	overflow-x: hidden;
+}
+
+.description-container{
+	min-height:15vh;
+}
+
+
+.segment-label-container{
+	grid-column:1;
+}
+
+
+.add-segments-container {
+	grid-column: 2;
+	justify-self: right;
+}
+
+.add-segment-btn{
+	width: 20vw;
+}
+
+.bttm-margin {
+	margin-bottom: 1vh;
 }
