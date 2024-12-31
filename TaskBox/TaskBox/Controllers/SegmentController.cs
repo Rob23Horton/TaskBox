@@ -11,11 +11,9 @@ namespace TaskBox.Controllers
 	public class SegmentController : Controller
 	{
 		private readonly ISegmentRepository _segmentRepository;
-		public readonly AuthenticationStateProvider _authenticationStateProvider;
-		public SegmentController(ISegmentRepository segmentRepository, AuthenticationStateProvider authenticationStateProvider)
+		public SegmentController(ISegmentRepository segmentRepository)
 		{
 			this._segmentRepository = segmentRepository;
-			this._authenticationStateProvider = authenticationStateProvider;
 		}
 
 		[HttpGet("SegmentsFromProjectId")]

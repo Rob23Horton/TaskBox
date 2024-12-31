@@ -98,7 +98,23 @@
 							<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
 
 							<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
-								<li class="chart-li">@segment.Name</li>
+								
+								<ToolTip>
+									<Tip>
+										<div class='d-flex flex-column'>
+											<label>@segment.Name</label>
+											<label>Description - @(segment.Description.Length > 20? segment.Description.Substring(0, 20) : segment.Description)</label>
+											<label>Start Date - @segment.Start.ToLongDateString()</label>
+											<label>Due Date - @segment.Due.ToLongDateString()</label>
+										</div>
+									</Tip>
+									<Content>
+										<li class="chart-li">
+											@segment.Name
+										</li>
+									</Content>
+								</ToolTip>
+								
 							</ul>
 						</div>
 					}
@@ -259,9 +275,6 @@
 
 	private async void AddSegment()
 	{
-		//TODO - Show modal for adding segment
-		Console.WriteLine("Adding Segment");
-
 		NewSegmentDetails.OwnerProject = Id;
 
 		SegmentAndUser newSegment = new SegmentAndUser(UserId, NewSegmentDetails);

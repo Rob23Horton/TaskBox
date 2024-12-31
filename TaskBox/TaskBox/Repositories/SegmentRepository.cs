@@ -1,7 +1,5 @@
 ﻿using DatabaseConnection.Models;
 using DatabaseConnection.Services;
-using Microsoft.AspNetCore.Components.Authorization;
-using System.Security.Claims;
 using TaskBox.Interfaces;
 using TaskBox.Shared.Models;
 
