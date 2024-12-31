@@ -13,6 +13,6 @@ namespace TaskBox.Shared.Models
 		public int Id { get; set; }
 		public int UserCode { get; set; }
 		public int ProjectCode { get; set; }
-		public char Permission { get; set; }
+		public string Permission { get; set; }
 	}
 }

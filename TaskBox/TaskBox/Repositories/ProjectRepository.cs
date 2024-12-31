@@ -38,6 +38,39 @@ namespace TaskBox.Repositories
 			}
 		}
 
+		public ProjectUserPermission GetProjectUserPermission(int UserId, int ProjectId)
+		{
+			try
+			{
+				SelectRequest permissionRequest = new SelectRequest("tblProjectUser");
+				permissionRequest.AddData("tblProjectUser", "ProjectUserId", "Id");
+				permissionRequest.AddData("ProjectCode");
+				permissionRequest.AddData("UserCode");
+				permissionRequest.AddData("Permission");
+
+				permissionRequest.AddWhere("UserCode", UserId);
+				permissionRequest.AddWhere("ProjectCode", ProjectId);
+
+				List<ProjectUserPermission> permission = _databaseConnection.Select<ProjectUserPermission>(permissionRequest);
+
+				if (permission.Count() == 0)
+				{
+					throw new Exception();
+				}
+
+				return permission[0];
+			}
+			catch
+			{
+				ProjectUserPermission permission = new ProjectUserPermission();
+				permission.Permission = "N";
+				permission.ProjectCode = ProjectId;
+				permission.UserCode = UserId;
+
+				return permission;
+			}
+		}
+
 		public Project GetProject(int ProjectId)
 		{
 			SelectRequest projectRequest = new SelectRequest("tblProject");

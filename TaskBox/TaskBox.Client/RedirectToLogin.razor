@@ -3,6 +3,12 @@
 @code {
     protected override void OnInitialized()
     {
-        NavigationManager.NavigateTo($"/access-denied", forceLoad: true);
+        try
+        {
+            NavigationManager.NavigateTo($"/access-denied", forceLoad: true);
+        }
+        catch{
+
+        }
     }
 }

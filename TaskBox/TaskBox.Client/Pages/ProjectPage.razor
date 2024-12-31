@@ -57,54 +57,87 @@
 			@ProjectDetails.Description
 		</span>
 	</div>
-
 	<div>
+		<button type="button" @onclick="OnShowModalClick">Add Segment</button>
+	</div>
+
+	<div class="no-padding-margin">
 		@if (SegmentDetails.Count() > 0)
 		{
-		<div class="container">
-			<div class="chart">
-				<div class="chart-row chart-period">
-					<div class="chart-row-item"></div>
-					@for (int i = 0; i < NumOfDays + 1; i++)
-					{
-						DateTime date = FirstStart.AddDays((double)i);
-						@if (date.Date == DateTime.Today) {
-							<span class="today">@((MarkupString)date.Day.ToString())</span>
+			<div class="container">
+				<div class="chart">
+					<div class="chart-row chart-period">
+						<div class="chart-row-item"></div>
+						@for (int i = 0; i < NumOfDays + 1; i++)
+						{
+							DateTime date = FirstStart.AddDays((double)i);
+							@if (date.Date == DateTime.Today) {
+								<span class="today">@((MarkupString)date.Day.ToString())</span>
+							}
+							else if (date.Day == 1){
+								<span>@((MarkupString)date.ToString("d MMM"))</span>
+							}
+							else{
+								<span>@((MarkupString)date.Day.ToString())</span>
+							}
 						}
-						else if (date.Day == 1){
-							<span>@((MarkupString)date.ToString("d MMM"))</span>
-						}
-						else{
-							<span>@((MarkupString)date.Day.ToString())</span>
-						}
-					}
-				</div>
-				<div class="chart-row chart-lines">
-					@for (int i = 0; i < NumOfDays + 1; i++){
-						<span></span>
-					}
-				</div>
-				@foreach (Segment segment in SegmentDetails)
-				{
-
-					int fromStart = GetDays(FirstStart, segment.Start) + 2;
-					int length = GetDays(segment.Start, segment.Due);
-					length = length == 0 ? 0 : length + 1;
-
-					<div class="chart-row">
-						<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
-
-						<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
-							<li class="chart-li">@segment.Name</li>
-						</ul>
 					</div>
-				}
+					<div class="chart-row chart-lines">
+						@for (int i = 0; i < NumOfDays + 1; i++){
+							<span></span>
+						}
+					</div>
+					@foreach (Segment segment in SegmentDetails)
+					{
+
+						int fromStart = GetDays(FirstStart, segment.Start) + 2;
+						int length = GetDays(segment.Start, segment.Due);
+						length = length == 0 ? 0 : length + 1;
+
+						<div class="chart-row">
+							<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
+
+							<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
+								<li class="chart-li">@segment.Name</li>
+							</ul>
+						</div>
+					}
+				</div>
 			</div>
-		</div>
 		}
 	</div>
 </div>
 
+<Modal @ref="modal">
+	<Title>Create Segment</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div class="form-control w-100">
+				<InputText class="w-100" placeholder="Segment Name (Max 24 chars)" maxlength="24" @bind-Value="@NewSegmentDetails.Name" />
+			</div>
+			<div class="form-control w-100">
+				<InputTextArea class="w-100" placeholder="Description" @bind-Value="@NewSegmentDetails.Description" />
+			</div>
+			<div class="form-control d-flex flex-column">
+				<label>Start Date -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@NewSegmentDetails.Start"></InputDate>
+			</div>
+			<div class="form-control d-flex flex-column">
+				<label>Due Date -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@NewSegmentDetails.Due"></InputDate>
+			</div>
+			<div>
+				<label>@errorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="AddSegment">Create</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
 
 
 @code
@@ -128,14 +161,24 @@
 	private int NumOfDays { get; set; } = 0;
 	private DateTime FirstStart { get; set; } = new DateTime();
 
+	private Segment NewSegmentDetails { get; set; } = new Segment();
+
 	protected override async void OnInitialized()
 	{
 		//Gets the User Id from the authenticationStateProvider
-		AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
-		Claim userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
-		if (userIdClaim == default)
+		Claim userIdClaim;
+		try
 		{
-			navManager.NavigateTo("/access-denied");
+			AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+			userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
+			if (userIdClaim == default)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+		}
+		catch
+		{
 			return;
 		}
 
@@ -212,4 +255,47 @@
 		return (End.Date - Start.Date).Days;
 	}
 
+
+
+	private async void AddSegment()
+	{
+		//TODO - Show modal for adding segment
+		Console.WriteLine("Adding Segment");
+
+		NewSegmentDetails.OwnerProject = Id;
+
+		SegmentAndUser newSegment = new SegmentAndUser(UserId, NewSegmentDetails);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<SegmentAndUser>("/api/Segment/CreateSegment", newSegment);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			errorMessage = "Something went wrong";
+			StateHasChanged();
+			return;
+		}
+		else if (success.Success == false){
+			errorMessage = success.Message;
+			StateHasChanged();
+			return;
+		}
+
+		Console.WriteLine("Made it past ;)");
+
+		navManager.Refresh(forceReload: true);
+	}
+
+	private Modal modal;
+	private string errorMessage = "";
+
+	private async Task OnShowModalClick()
+	{
+		modal.Open();
+	}
+
+	private async Task OnHideModalClick()
+	{
+		modal.Close();
+	}
 }

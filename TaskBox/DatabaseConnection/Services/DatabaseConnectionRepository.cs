@@ -109,6 +109,10 @@ namespace DatabaseConnection.Services
 					{
 						query += $"b'{(boolVal ? '1' : '0')}' AND ";
 					}
+					else if (where.Value is DateTime dateVal)
+					{
+						query += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+					}
 				}
 
 				query = query.Substring(0, query.Length - 5);
@@ -183,6 +187,10 @@ namespace DatabaseConnection.Services
 				{
 					values += $"b'{(boolVal ? '1' : '0')}', ";
 				}
+				else if (value is DateTime dateVal)
+				{
+					values += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
 			}
 
 			valueNames = $"{valueNames.Substring(0, valueNames.Length - 2)})";
@@ -228,6 +236,10 @@ namespace DatabaseConnection.Services
 				else if (value is bool boolVal)
 				{
 					values += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (value is DateTime dateVal)
+				{
+					values += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
 				}
 			}
 
