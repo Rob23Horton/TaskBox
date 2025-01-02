@@ -57,3 +57,8 @@ li {
 ul .chart-li {
 	background-color: #588BAE;
 }
+
+
+.today {
+	background-color: green;
+}
