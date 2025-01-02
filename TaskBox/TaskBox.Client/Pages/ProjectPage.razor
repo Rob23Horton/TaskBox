@@ -1,16 +1,14 @@
 ﻿@page "/project-page/{ProjectId}"
 
-@using System.Security.Claims;
 
-@inject AuthenticationStateProvider authenticationStateProvider;
 @inject NavigationManager navManager;
 @inject HttpClient httpClient;
 
-<AuthorizeView>
-	<NotAuthorized>
-		<RedirectToLogin />
-	</NotAuthorized>
-</AuthorizeView>
+@inherits BaseLoggedInPage;
+
+@* Renders inherited razor class for authentication to work*@
+@{base.BuildRenderTree(__builder);}
+
 
 <style>
 	.chart-period {
@@ -35,6 +33,8 @@
 	margin: 0;
 	grid-gap: 10px 0;
 	border-bottom: 1px solid #000;
+	overflow-x: hidden;
+	overflow-y: visible;
 	}
 
 	.chart-row {
@@ -102,7 +102,7 @@
 						<div class="chart-row">
 							<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
 
-							<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
+							<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());" @onclick="@(() => GoToSegmentPage(segment.Id))">
 
 								<ToolTip>
 									<Tip>
@@ -185,26 +185,8 @@
 
 	protected override async void OnInitialized()
 	{
-		//Gets the User Id from the authenticationStateProvider
-		Claim userIdClaim;
-		try
-		{
-			AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
-			userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
-			if (userIdClaim == default)
-			{
-				navManager.NavigateTo("/access-denied");
-				return;
-			}
-		}
-		catch
-		{
-			return;
-		}
-
-		//Parses UserId from string to int
-		int.TryParse(userIdClaim.Value, out int userId);
-		this.UserId = userId;
+		//Gets User Id by using inherited razor class function
+		UserId = await base.GetUserId();
 
 
 		//Calls API to check if user is allowed to do this project
@@ -217,10 +199,19 @@
 				return;
 			}
 		}
-		catch{
+		catch
+		{
 			return;
 		}
 
+		base.OnInitialized();
+
+		//Loads data to gantt chart
+		LoadData();
+	}
+
+	private async void LoadData()
+	{
 		try
 		{
 			//Gets the project details from API
@@ -243,14 +234,10 @@
 		}
 		SegmentDetails = segments;
 
-
-		//TODO - Creates Gantt Chart
-
 		NumOfDays = GetTotalDays();
 
 
 		StateHasChanged();
-		base.OnInitialized();
 	}
 
 
@@ -329,16 +316,23 @@
 		navManager.Refresh(forceReload: true);
 	}
 
+
 	private Modal modal;
 	private string errorMessage = "";
 
-	private async Task OnShowModalClick()
+	private void OnShowModalClick()
 	{
 		modal.Open();
 	}
 
-	private async Task OnHideModalClick()
+	private void OnHideModalClick()
 	{
 		modal.Close();
+	}
+
+
+	private void GoToSegmentPage(int segmentId)
+	{
+		navManager.NavigateTo($"/segment-page/{segmentId}/");
 	}
 }

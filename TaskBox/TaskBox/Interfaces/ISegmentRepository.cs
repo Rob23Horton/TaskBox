@@ -4,7 +4,8 @@ namespace TaskBox.Interfaces
 {
 	public interface ISegmentRepository
 	{
+		public Segment GetSegmentFromId(int SegmentId);
 		public List<Segment> GetSegmentsFromProjectId(int ProjectId);
-		public Task<ApiResponse> CreateSegment(Segment segment, int UserId);
+		public ApiResponse CreateSegment(Segment segment, int UserId);
 	}
 }

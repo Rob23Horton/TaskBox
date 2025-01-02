@@ -1,0 +1,184 @@
+﻿
+@inject NavigationManager navManager;
+
+<style>
+	.chart-period {
+	background-color: #708090 !important;
+	border-bottom: 2px solid #000;
+	grid-template-columns: 50px repeat( @((MarkupString)(Length).ToString()), 1fr);
+	z-index: 1;
+	}
+
+	.chart-lines {
+	position: absolute;
+	height: 100%;
+	width: 100%;
+	background-color: transparent;
+	grid-template-columns: 50px repeat( @((MarkupString)(Length).ToString()), 1fr);
+	}
+
+	.chart-row-bars {
+	list-style: none;
+	display: grid;
+	padding: 15px 0;
+	margin: 0;
+	grid-gap: 10px 0;
+	border-bottom: 1px solid #000;
+	overflow-x: hidden;
+	overflow-y: visible;
+	}
+
+	.chart-row {
+	display: grid;
+	grid-template-columns: 50px repeat( @((MarkupString)(Length).ToString()), 1fr);
+	background-color: #DCDCDC;
+	}
+
+	.chart-row:nth-child(odd) {
+	background-color: #C0C0C0;
+	}
+</style>
+
+
+<div class="no-padding-margin gantt-chart-container bttm-margin">
+	@if (Items.Count() > 0)
+	{
+		<div>
+			<div @onclick="GoLeft">
+				<span>@((MarkupString)"<")</span>
+			</div>
+			<div @onclick="GoRight">
+				<span>@((MarkupString)">")</span>
+			</div>
+		</div>
+
+		<div class="gantt-container">
+			<div class="chart">
+				<div class="chart-row chart-period">
+					<div class="chart-row-item"></div>
+					@for (int i = CurrentPage * Length; i < (CurrentPage * Length) + Length; i++)
+					{
+						DateTime date = FirstStart.AddDays((double)i);
+						@if (date.Date == DateTime.Today)
+						{
+							<span class="today">@((MarkupString)date.Day.ToString())</span>
+						}
+						else if (date.Day == 1)
+						{
+							<span>@((MarkupString)date.ToString("d MMM"))</span>
+						}
+						else
+						{
+							<span>@((MarkupString)date.Day.ToString())</span>
+						}
+					}
+				</div>
+				<div class="chart-row chart-lines">
+					@for (int i = 0; i < Length; i++)
+					{
+						<span></span>
+					}
+				</div>
+				@{
+					DateTime currentStart = FirstStart.AddDays(CurrentPage * Length);
+					DateTime currentEnd = currentStart.AddDays(Length);
+				}
+				@foreach (GanttChartObject item in Items.OrderBy(i => i.Start).Where(i => i.Due >= currentStart))
+				{
+					DateTime start = item.Start < currentStart ? currentStart : item.Start;
+					int fromStart = GetDays(currentStart, start) + 2;
+
+					DateTime due = item.Due > currentEnd ? currentEnd : item.Due.AddDays(1);
+					int length = GetDays(start, due);
+
+					Console.WriteLine($"Start - {item.Start}, Due - {due}, Actual due - {item.Due}");
+					Console.WriteLine($"Length - {length}");
+
+					<div class="chart-row">
+						<div class="chart-row-item">@Items.IndexOf(item)</div>
+
+						<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());" @onclick="@(() => ClickLink(item.Id))">
+
+							<ToolTip>
+								<Tip>
+									<div class='d-flex flex-column'>
+										<label>@item.Name</label>
+										<label>Description - @(item.Description.Length > 20 ? item.Description.Substring(0, 20) : item.Description)</label>
+										<label>Start Date - @item.Start.ToLongDateString() @item.Start.ToShortTimeString()</label>
+										<label>Due Date - @item.Due.ToLongDateString() @item.Due.ToShortTimeString()</label>
+									</div>
+								</Tip>
+								<Content>
+									<li class="chart-li">
+										@item.Name
+									</li>
+								</Content>
+							</ToolTip>
+						</ul>
+					</div>
+				}
+			</div>
+		</div>
+	}
+</div>
+
+
+@code
+{
+	[Parameter]
+	public string ClickUrl { get; set; }
+
+	[Parameter]
+	public int Length { get; set; }
+
+	[Parameter]
+	public int Frequency { get; set; }
+
+	[Parameter]
+	public List<GanttChartObject> Items { get; set; }
+
+	public DateTime FirstStart { get; set; }
+	public DateTime LastDue { get; set; }
+
+	private int CurrentPage { get; set; } = 0;
+
+	protected override bool ShouldRender()
+	{
+		Console.WriteLine("");
+
+		if (Items.Count() > 0)
+		{
+			FirstStart = Items.OrderBy(i => i.Start).First().Start;
+			LastDue = Items.OrderByDescending(i => i.Due).First().Due;
+
+			Console.WriteLine($"First Start - {FirstStart} Last Due - {LastDue}");
+		}
+
+		return base.ShouldRender();
+	}
+
+	private int GetDays(DateTime Start, DateTime End)
+	{
+		return (End.Date - Start.Date).Days;
+	}
+
+	private void ClickLink(int Id)
+	{
+		navManager.NavigateTo($"{ClickUrl}{Id}");
+	}
+
+	private void GoLeft(){
+		CurrentPage = CurrentPage == 0 ? 0 : CurrentPage - 1;
+		StateHasChanged();
+	}
+
+	private void GoRight(){
+		CurrentPage += 1;
+		// if (LastDue < FirstStart.AddDays((CurrentPage * Length) + Length))
+		// {
+		// 	CurrentPage -= 1;
+		// }
+		StateHasChanged();
+	}
+
+}

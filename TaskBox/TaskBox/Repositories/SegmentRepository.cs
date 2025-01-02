@@ -15,7 +15,7 @@ namespace TaskBox.Repositories
 			this._projectRepository = projectRepository;
 		}
 
-		public async Task<ApiResponse> CreateSegment(Segment segment, int UserId)
+		public ApiResponse CreateSegment(Segment segment, int UserId)
 		{
 			ApiResponse response = new ApiResponse();
 
@@ -29,8 +29,6 @@ namespace TaskBox.Repositories
 				response.Message = "User doesn't have the permissions for this";
 				return response;
 			}
-
-
 
 			//Inserts into the database
 			Note note = new Note(segment.Description);
@@ -56,6 +54,26 @@ namespace TaskBox.Repositories
 
 			response.Success = true;
 			return response;
+		}
+
+		public Segment GetSegmentFromId(int SegmentId)
+		{
+			SelectRequest segmentsRequest = new SelectRequest("tblSegment");
+
+			segmentsRequest.AddData("tblSegment", "SegmentId", "Id");
+			segmentsRequest.AddData("tblSegment", "Name");
+			segmentsRequest.AddData("tblSegment", "ProjectCode", "OwnerProject");
+			segmentsRequest.AddData("tblSegment", "Start");
+			segmentsRequest.AddData("tblSegment", "Due");
+			segmentsRequest.AddData("tblNote", "Description");
+
+			segmentsRequest.AddJoin("tblSegment", "NoteCode", "tblNote", "NoteId");
+
+			segmentsRequest.AddWhere("tblSegment", "SegmentId", SegmentId);
+
+			List<Segment> segment = _databaseConnection.Select<Segment>(segmentsRequest);
+
+			return segment[0];
 		}
 
 		public List<Segment> GetSegmentsFromProjectId(int ProjectId)

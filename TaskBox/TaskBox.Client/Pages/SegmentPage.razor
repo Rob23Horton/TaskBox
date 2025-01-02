@@ -1,0 +1,112 @@
+﻿@page "/segment-page/{SegmentId}"
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{base.BuildRenderTree(__builder);}
+
+<div>
+	<h1>@SegmentDetails.Name</h1>
+
+	<div>
+		<span>
+			@SegmentDetails.Description
+		</span>
+	</div>
+
+	<GanttChart
+		ClickUrl="/task-page/"
+		Length="30"
+		Frequency="1"
+		Items="@GanttChartTasks"
+	></GanttChart>
+</div>
+
+
+
+@code
+{
+	[Parameter]
+	public string SegmentId
+	{
+		get
+		{
+			return this.Id.ToString();
+		}
+		set
+		{
+			int.TryParse(value, out int id);
+			this.Id = id;
+		}
+	}
+	private int Id { get; set; }
+	private int UserId { get; set; }
+
+	private Segment SegmentDetails { get; set; } = new Segment();
+
+	private List<TaskBoxTask> Tasks { get; set; } = new List<TaskBoxTask>();
+	private List<GanttChartObject> GanttChartTasks { get; set; } = new List<GanttChartObject>();
+
+	private DateTime FirstStart { get; set; } = DateTime.Now;
+
+	protected override async void OnInitialized()
+	{
+		UserId = await base.GetUserId();
+
+
+		//Calls API to check if user is allowed to do this project
+		try
+		{
+			bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Segment/CheckPermission?UserId={UserId}&SegmentId={Id}");
+			if (permission == false)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+		}
+		catch
+		{
+			return;
+		}
+
+
+		base.OnInitialized();
+
+		GetSegmentData();
+	}
+
+
+	private async void GetSegmentData()
+	{
+		try
+		{
+			//Gets the Segment details from API
+			SegmentDetails = await httpClient.GetFromJsonAsync<Segment>($"/api/Segment/GetSegment?SegmentId={Id}");
+		}
+		catch
+		{
+			navManager.NavigateTo("/not-existant");
+		}
+
+		try
+		{
+			Tasks = await httpClient.GetFromJsonAsync<List<TaskBoxTask>>($"/api/Task/TasksFromSegmentId?SegmentId={Id}");
+		}
+		catch
+		{
+			Tasks = new List<TaskBoxTask>();
+		}
+
+		//Casts all tasks to GanttChartObjects so that Gantt Chart can be used
+		GanttChartTasks = new List<GanttChartObject>();
+		foreach (TaskBoxTask task in Tasks)
+		{
+			GanttChartTasks.Add(new GanttChartObject(task));
+		}
+
+		StateHasChanged();
+	}
+
+}

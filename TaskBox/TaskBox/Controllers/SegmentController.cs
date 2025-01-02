@@ -16,6 +16,22 @@ namespace TaskBox.Controllers
 			this._segmentRepository = segmentRepository;
 		}
 
+		[HttpGet("GetSegment")]
+		[ProducesResponseType(200, Type=typeof(Segment))]
+		[ProducesResponseType(400)]
+		public IActionResult GetSegmentFromId(int SegmentId)
+		{
+			try
+			{
+				return Ok(_segmentRepository.GetSegmentFromId(SegmentId));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
+
 		[HttpGet("SegmentsFromProjectId")]
 		[ProducesResponseType(200, Type=typeof(IEnumerable<Segment>))]
 		[ProducesResponseType(400)]
@@ -35,12 +51,12 @@ namespace TaskBox.Controllers
 		[HttpPost("CreateSegment")]
 		[ProducesResponseType(200, Type=typeof(ApiResponse))]
 		[ProducesResponseType(400, Type=typeof(ApiResponse))]
-		public async Task<IActionResult> CreateSegment(SegmentAndUser newSegment)
+		public IActionResult CreateSegment(SegmentAndUser newSegment)
 		{
 			ApiResponse response = new ApiResponse();
 			try
 			{
-				return Ok(await _segmentRepository.CreateSegment(newSegment.Segment, newSegment.UserId));
+				return Ok(_segmentRepository.CreateSegment(newSegment.Segment, newSegment.UserId));
 			}
 			catch
 			{
@@ -48,6 +64,21 @@ namespace TaskBox.Controllers
 				response.Success = false;
 				response.Message = "Something went wrong. Please try again later!";
 				return BadRequest(response);
+			}
+		}
+
+		[HttpGet("CheckPermission")]
+		[ProducesResponseType(200, Type=typeof(bool))]
+		[ProducesResponseType(400, Type = typeof(bool))]
+		public IActionResult CheckPermission(int UserId, int SegmentId)
+		{
+			try
+			{
+				return Ok(true);
+			}
+			catch
+			{
+				return BadRequest(false);
 			}
 		}
 	}
