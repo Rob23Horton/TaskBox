@@ -62,3 +62,32 @@ ul .chart-li {
 .today {
 	background-color: green;
 }
+
+
+.movement-container{
+	display: grid;
+	margin-bottom: 10px;
+}
+
+.movement-left {
+	grid-column-start: 1;
+	justify-self:left;
+}
+
+.movement-today{
+	gird-column-start: 2;
+	justify-self: center;
+}
+
+.movement-right {
+	grid-column-start: 3;
+	justify-self: right;
+}
+
+
+svg {
+	width: 2vw;
+	height: 2vw;
+	min-height: 2em;
+	min-width: 2em;
+}
