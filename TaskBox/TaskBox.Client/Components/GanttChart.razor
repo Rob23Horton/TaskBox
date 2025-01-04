@@ -70,7 +70,7 @@
 			<div class="chart">
 				<div class="chart-row chart-period">
 					<div class="chart-row-item"></div>
-					@for (int i = 0; i < Length * Frequency; i++)
+					@for (int i = 0; i < Length; i++)
 					{
 						DateTime date = currentStart.AddDays((double)i);
 						@if (date.Date == DateTime.Today.Date)
@@ -140,9 +140,6 @@
 	public string ClickUrl { get; set; }
 
 	[Parameter]
-	public int Length { get; set; }
-
-	[Parameter]
 	public int Frequency { get; set; }
 
 	[Parameter]
@@ -150,6 +147,7 @@
 
 	public DateTime FirstStart { get; set; }
 
+	private int Length { get; set; }
 	private int CurrentPage { get; set; } = 0;
 
 	protected override bool ShouldRender()
@@ -188,9 +186,9 @@
 		if (Items.Count() > 0)
 		{
 			DateTime lastDue = Items.OrderByDescending(i => i.Due).First().Due;
-			DateTime currentDate = FirstStart.AddMonths(CurrentPage + 1);
+			DateTime currentDate = new DateTime(FirstStart.Year, FirstStart.Month, 1).AddMonths(CurrentPage + 1);
 
-			if (currentDate > lastDue)
+			if (currentDate.Date > lastDue.Date)
 			{
 				return;
 			}
