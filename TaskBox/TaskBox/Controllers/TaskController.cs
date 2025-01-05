@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TaskBox.Interfaces;
+using TaskBox.Repositories;
 using TaskBox.Shared.Models;
 
 namespace TaskBox.Controllers
@@ -26,6 +27,25 @@ namespace TaskBox.Controllers
 			catch
 			{
 				return BadRequest();
+			}
+		}
+
+		[HttpPost("CreateTask")]
+		[ProducesResponseType(200, Type = typeof(ApiResponse))]
+		[ProducesResponseType(400, Type = typeof(ApiResponse))]
+		public IActionResult CreateSegment(TaskAndUser newSegment)
+		{
+			ApiResponse response = new ApiResponse();
+			try
+			{
+				return Ok(_taskRepository.CreateTask(newSegment.Task, newSegment.UserId));
+			}
+			catch
+			{
+
+				response.Success = false;
+				response.Message = "Something went wrong. Please try again later!";
+				return BadRequest(response);
 			}
 		}
 	}

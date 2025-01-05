@@ -12,6 +12,10 @@
 
 <div class="d-flex flex-column page">
 	<h1>@ProjectDetails.Name</h1>
+	<div>
+		<span>From @ProjectDetails.Start.ToLongDateString() @ProjectDetails.Start.ToShortTimeString()</span>
+		<span>To @ProjectDetails.Due.ToLongDateString() @ProjectDetails.Due.ToShortTimeString()</span>
+	</div>
 
 	<div class="description-container bttm-margin">
 		<span>
@@ -87,9 +91,6 @@
 	private List<Segment> SegmentDetails { get; set; } = new List<Segment>();
 	private List<GanttChartObject> GanttChartItems { get; set; } = new List<GanttChartObject>();
 
-	private int NumOfDays { get; set; } = 0;
-	private DateTime FirstStart { get; set; } = new DateTime();
-
 	private Segment NewSegmentDetails { get; set; } = new Segment();
 
 	protected override async void OnInitialized()
@@ -143,8 +144,6 @@
 		}
 		SegmentDetails = segments;
 
-		NumOfDays = GetTotalDays();
-
 		GanttChartItems = new List<GanttChartObject>();
 		if (segments is not null && segments.Count() > 0)
 		{
@@ -163,30 +162,6 @@
 
 		StateHasChanged();
 	}
-
-
-	private int GetTotalDays()
-	{
-		Segment firstStart = SegmentDetails.OrderBy(s => s.Start).FirstOrDefault();
-		Segment lastDue = SegmentDetails.OrderByDescending(s => s.Due).FirstOrDefault();
-
-		if (firstStart == default || lastDue == default)
-		{
-			Console.WriteLine("Return");
-			return 0;
-		}
-
-		FirstStart = firstStart.Start;
-
-		return GetDays(firstStart.Start, lastDue.Due);
-	}
-
-	private int GetDays(DateTime Start, DateTime End)
-	{
-		return (End.Date - Start.Date).Days;
-	}
-
-
 
 	private async void AddSegment()
 	{
@@ -214,6 +189,18 @@
 		else if (NewSegmentDetails.Start < DateTime.Now.AddYears(-1))
 		{
 			errorMessage = "Start date cannot be more than a year ago!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewSegmentDetails.Start < ProjectDetails.Start)
+		{
+			errorMessage = "Start date cannot be before project start date!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewSegmentDetails.Due > ProjectDetails.Due)
+		{
+			errorMessage = "Due date cannot be after project due date!";
 			StateHasChanged();
 			return;
 		}
@@ -247,16 +234,5 @@
 	private void OnShowModalClick()
 	{
 		modal.Open();
-	}
-
-	private void OnHideModalClick()
-	{
-		modal.Close();
-	}
-
-
-	private void GoToSegmentPage(int segmentId)
-	{
-		navManager.NavigateTo($"/segment-page/{segmentId}/");
 	}
 }

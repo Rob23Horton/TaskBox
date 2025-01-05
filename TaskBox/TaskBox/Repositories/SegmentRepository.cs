@@ -22,7 +22,7 @@ namespace TaskBox.Repositories
 			//Check user has permission to create segments (A or M)
 			ProjectUserPermission userPermission = _projectRepository.GetProjectUserPermission(UserId, segment.OwnerProject);
 
-			Console.WriteLine(userPermission.Permission.ToString());
+			Console.WriteLine($"User {UserId} is adding {segment.Name} to project {segment.OwnerProject} with permission {userPermission.Permission}!");
 			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M")
 			{
 				response.Success = false;
@@ -101,6 +101,44 @@ namespace TaskBox.Repositories
 			{
 				return new List<Segment>();
 			}
+		}
+
+		public ProjectUserPermission UserSegmentPermission(int SegmentId, int UserId)
+		{
+			ProjectUserPermission permission = new ProjectUserPermission();
+
+			try
+			{
+				SelectRequest permissionRequest = new SelectRequest("tblProjectUser");
+				permissionRequest.AddData("ProjectUserId");
+				permissionRequest.AddData("tblProjectUser", "ProjectUserId", "Id");
+				permissionRequest.AddData("UserCode");
+				permissionRequest.AddData("ProjectCode");
+				permissionRequest.AddData("Permission");
+
+				permissionRequest.AddJoin("tblProjectUser", "ProjectCode", "tblProject", "ProjectId");
+				permissionRequest.AddJoin("tblProject", "ProjectId", "tblSegment", "ProjectCode");
+
+				permissionRequest.AddWhere("UserCode", UserId);
+				permissionRequest.AddWhere("tblSegment", "SegmentId", SegmentId);
+
+				List<ProjectUserPermission> permissions = _databaseConnection.Select<ProjectUserPermission>(permissionRequest);
+
+				if (permissions.Count() == 0)
+				{
+					permission.UserCode = UserId;
+					permission.Permission = "N";
+				}
+
+				permission = permissions[0];
+			}
+			catch
+			{
+				permission.UserCode = UserId;
+				permission.Permission = "N";
+			}
+
+			return permission;
 		}
 	}
 }
