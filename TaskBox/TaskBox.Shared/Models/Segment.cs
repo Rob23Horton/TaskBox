@@ -12,5 +12,7 @@ namespace TaskBox.Shared.Models
 		[InsertIgnore]
 		public override int Id { get; set; }
 		public int OwnerProject { get; set; }
+		public string OwnerProjectName { get; set; } = "";
+		public long BugNumber { get; set; }
 	}
 }

@@ -8,16 +8,21 @@
 @{base.BuildRenderTree(__builder);}
 
 <div class="d-flex flex-column page">
-	<h1>@SegmentDetails.Name</h1>
+	<h1><a href="/project-page/@SegmentDetails.OwnerProject">@SegmentDetails.OwnerProjectName</a> - @SegmentDetails.Name</h1>
 	<div class="bttm-margin">
 		<span>From @SegmentDetails.Start.ToLongDateString() @SegmentDetails.Start.ToShortTimeString()</span>
 		<span>To @SegmentDetails.Due.ToLongDateString() @SegmentDetails.Due.ToShortTimeString()</span>
 	</div>
 
-	<div class="description-container bttm-margin">
-		<span>
-			@SegmentDetails.Description
-		</span>
+	<div class="d-grid bttm-margin info-container">
+		<div class="description-container">
+			<span style="white-space: pre-line">
+				@SegmentDetails.Description
+			</span>
+		</div>
+		<div class="bug-container">
+			<button type="button" @onclick="GoToBugPage">Number Of Bugs - @SegmentDetails.BugNumber</button>
+		</div>
 	</div>
 	<div class="d-grid bttm-margin">
 		<div class="segment-label-container">
@@ -30,7 +35,7 @@
 
 	<div>
 		<GanttChart
-		ClickUrl="/segment-page/"
+		ClickUrl="/task-page/"
 		Frequency="1"
 		Items="@GanttChartTasks"
 		></GanttChart>
@@ -223,9 +228,11 @@
 			return;
 		}
 
-		Console.WriteLine("Made it past ;)");
-
 		navManager.Refresh(forceReload: true);
+	}
 
+	private void GoToBugPage()
+	{
+		navManager.NavigateTo($"/bug-page/{SegmentDetails.Id}");
 	}
 }

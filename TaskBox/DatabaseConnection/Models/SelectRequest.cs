@@ -32,6 +32,16 @@ namespace DatabaseConnection.Models
 			RequestData newData = new RequestData(Table, ValueName, As);
 			AddData(newData);
 		}
+		//Adds a subquery for a return data
+		public void AddData(SubQuery SubQuery)
+		{
+			SubQueries.Add(SubQuery);
+		}
+		public void AddData(Functions Function, SelectRequest dataRequest, string As)
+		{
+			SubQuery subQuery = new SubQuery(Function, dataRequest, As);
+			AddData(subQuery);
+		}
 
 		
 		public void AddJoin(RequestJoin requestJoin)
@@ -63,6 +73,7 @@ namespace DatabaseConnection.Models
 
 		public string Table { get; set; }
 		public List<RequestData> Data { get; set; } = new List<RequestData>();
+		public List<SubQuery> SubQueries = new List<SubQuery>();
 		public List<RequestJoin> Joins { get; set; } = new List<RequestJoin>();
 		public List<RequestWhere> WhereData { get; set; } = new List<RequestWhere>();
 	}

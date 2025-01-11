@@ -18,7 +18,7 @@
 	</div>
 
 	<div class="description-container bttm-margin">
-		<span>
+		<span style="white-space: pre-line">
 			@ProjectDetails.Description
 		</span>
 	</div>
@@ -221,8 +221,6 @@
 			StateHasChanged();
 			return;
 		}
-
-		Console.WriteLine("Made it past ;)");
 
 		navManager.Refresh(forceReload: true);
 	}

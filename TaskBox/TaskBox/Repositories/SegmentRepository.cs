@@ -62,12 +62,20 @@ namespace TaskBox.Repositories
 
 			segmentsRequest.AddData("tblSegment", "SegmentId", "Id");
 			segmentsRequest.AddData("tblSegment", "Name");
-			segmentsRequest.AddData("tblSegment", "ProjectCode", "OwnerProject");
+			segmentsRequest.AddData("tblProject", "ProjectId", "OwnerProject");
+			segmentsRequest.AddData("tblProject", "Name", "OwnerProjectName");
 			segmentsRequest.AddData("tblSegment", "Start");
 			segmentsRequest.AddData("tblSegment", "Due");
 			segmentsRequest.AddData("tblNote", "Description");
 
+			SelectRequest bugRequest = new SelectRequest("tblBug");
+			bugRequest.AddData("BugId");
+			bugRequest.AddWhere("SegmentCode", SegmentId);
+
+			segmentsRequest.AddData(Functions.Count, bugRequest, "BugNumber");
+
 			segmentsRequest.AddJoin("tblSegment", "NoteCode", "tblNote", "NoteId");
+			segmentsRequest.AddJoin("tblSegment", "ProjectCode", "tblProject", "ProjectId");
 
 			segmentsRequest.AddWhere("tblSegment", "SegmentId", SegmentId);
 

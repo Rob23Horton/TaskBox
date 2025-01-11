@@ -80,6 +80,66 @@ namespace DatabaseConnection.Services
 				dataQuery += $"{requestData.Table}.{requestData.ValueName} as {requestData.ParseTo}, ";
 			}
 
+			string subQueryQuery = "";
+			//Adds Subqueries
+			foreach (SubQuery subQuery in request.SubQueries)
+			{
+				try
+				{
+					string currentQuery = "";
+
+					RequestData currData = subQuery.Select.Data[0];
+					currentQuery += $"(SELECT ";
+
+					switch (subQuery.Function)
+					{
+						case Functions.Count:
+							currentQuery += "COUNT(";
+							break;
+
+						case Functions.Sum:
+							currentQuery += "SUM(";
+							break;
+
+						case Functions.Average:
+							currentQuery += "AVG(";
+							break;
+					}
+
+					currentQuery += $"{currData.Table}.{currData.ValueName}) FROM {subQuery.Select.Table} WHERE ";
+
+					foreach (RequestWhere where in subQuery.Select.WhereData)
+					{
+						currentQuery += $"{where.Table}.{where.ValueName} = ";
+
+						if (where.Value is string strVal)
+						{
+							currentQuery += $"'{strVal}' AND ";
+						}
+						else if (where.Value is int intVal)
+						{
+							currentQuery += $"{intVal} AND ";
+						}
+						else if (where.Value is bool boolVal)
+						{
+							currentQuery += $"b'{(boolVal ? '1' : '0')}' AND ";
+						}
+						else if (where.Value is DateTime dateVal)
+						{
+							currentQuery += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+						}
+					}
+					currentQuery = currentQuery.Substring(0, currentQuery.Length - 5);
+
+					subQueryQuery += $"{currentQuery}) As {subQuery.As}, ";
+				}
+				catch
+				{
+					continue;
+				}
+			}
+			dataQuery += subQueryQuery;
+
 			dataQuery = dataQuery.Substring(0, dataQuery.Length - 2);
 			query += $"{dataQuery} FROM {request.Table} ";
 
@@ -118,6 +178,8 @@ namespace DatabaseConnection.Services
 				query = query.Substring(0, query.Length - 5);
 			}
 			query += ";";
+
+			Console.WriteLine($"Select Query - {query}");
 
 			MySqlCommand cmd = new MySqlCommand(query, _connection);
 			MySqlDataReader dataReader = cmd.ExecuteReader();
