@@ -1,0 +1,42 @@
+﻿@using System.Security.Claims;
+
+@inject AuthenticationStateProvider authenticationStateProvider;
+@inject NavigationManager navManager;
+
+<AuthorizeView>
+	<NotAuthorized>
+		<RedirectToLogin />
+	</NotAuthorized>
+</AuthorizeView>
+
+
+@code
+{
+	public async Task<int> GetUserId()
+	{
+		//Gets the User Id from the authenticationStateProvider
+		AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+		Claim? userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
+		if (userIdClaim is null || userIdClaim == default)
+		{
+			try
+			{
+				navManager.NavigateTo("/access-denied");
+			}
+			catch{
+
+			}
+
+			return -1;
+		}
+
+		//Parses UserId from string to int
+		if (int.TryParse(userIdClaim.Value, out int userId))
+		{
+			return userId;
+		}
+
+		navManager.NavigateTo("/access-denied");
+		return -1;
+	}
+}

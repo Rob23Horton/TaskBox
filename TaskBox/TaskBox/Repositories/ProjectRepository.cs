@@ -19,6 +19,10 @@ namespace TaskBox.Repositories
 			{
 				SelectRequest permissionRequest = new SelectRequest("tblProjectUser");
 				permissionRequest.AddData("ProjectUserId");
+				permissionRequest.AddData("tblProjectUser", "ProjectUserId", "Id");
+				permissionRequest.AddData("UserCode");
+				permissionRequest.AddData("ProjectCode");
+				permissionRequest.AddData("Permission");
 
 				permissionRequest.AddWhere("UserCode", UserId);
 				permissionRequest.AddWhere("ProjectCode", ProjectId);

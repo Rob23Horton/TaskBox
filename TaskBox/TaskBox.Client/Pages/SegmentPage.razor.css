@@ -1,0 +1,41 @@
+﻿.page {
+	overflow-x: hidden;
+}
+
+.info-container {
+	min-height: 15vh;
+}
+
+.description-container {
+	grid-column: 1;
+}
+
+.bug-container {
+	grid-column: 2;
+}
+
+	.bug-container > button {
+		width: 100%;
+		height: 100%;
+	
+	}
+
+
+
+.segment-label-container {
+	grid-column: 1;
+}
+
+
+.add-segments-container {
+	grid-column: 2;
+	justify-self: right;
+}
+
+.add-segment-btn {
+	width: 20vw;
+}
+
+.bttm-margin {
+	margin-bottom: 1vh;
+}

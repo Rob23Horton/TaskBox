@@ -1,59 +1,24 @@
 ﻿@page "/project-page/{ProjectId}"
 
-@using System.Security.Claims;
 
-@inject AuthenticationStateProvider authenticationStateProvider;
 @inject NavigationManager navManager;
 @inject HttpClient httpClient;
 
-<AuthorizeView>
-	<NotAuthorized>
-		<RedirectToLogin />
-	</NotAuthorized>
-</AuthorizeView>
+@inherits BaseLoggedInPage;
 
-<style>
-	.chart-period {
-	background-color: #708090 !important;
-	border-bottom: 2px solid #000;
-	grid-template-columns: 50px repeat( @((MarkupString)(NumOfDays + 1).ToString()), 1fr);
-	z-index: 1;
-	}
-
-	.chart-lines {
-	position: absolute;
-	height: 100%;
-	width: 100%;
-	background-color: transparent;
-	grid-template-columns: 50px repeat( @((MarkupString)(NumOfDays + 1).ToString()), 1fr);
-	}
-
-	.chart-row-bars {
-	list-style: none;
-	display: grid;
-	padding: 15px 0;
-	margin: 0;
-	grid-gap: 10px 0;
-	border-bottom: 1px solid #000;
-	}
-
-	.chart-row {
-	display: grid;
-	grid-template-columns: 50px repeat( @((MarkupString)(NumOfDays + 1).ToString()), 1fr);
-	background-color: #DCDCDC;
-	}
-
-	.chart-row:nth-child(odd) {
-	background-color: #C0C0C0;
-	}
-</style>
+@* Renders inherited razor class for authentication to work*@
+@{base.BuildRenderTree(__builder);}
 
 
 <div class="d-flex flex-column page">
 	<h1>@ProjectDetails.Name</h1>
+	<div>
+		<span>From @ProjectDetails.Start.ToLongDateString() @ProjectDetails.Start.ToShortTimeString()</span>
+		<span>To @ProjectDetails.Due.ToLongDateString() @ProjectDetails.Due.ToShortTimeString()</span>
+	</div>
 
 	<div class="description-container bttm-margin">
-		<span>
+		<span style="white-space: pre-line">
 			@ProjectDetails.Description
 		</span>
 	</div>
@@ -66,65 +31,12 @@
 		</div>
 	</div>
 
-	<div class="no-padding-margin gantt-chart-container bttm-margin">
-		@if (SegmentDetails.Count() > 0)
-		{
-			<div class="gantt-container">
-				<div class="chart">
-					<div class="chart-row chart-period">
-						<div class="chart-row-item"></div>
-						@for (int i = 0; i < NumOfDays + 1; i++)
-						{
-							DateTime date = FirstStart.AddDays((double)i);
-							@if (date.Date == DateTime.Today) {
-								<span class="today">@((MarkupString)date.Day.ToString())</span>
-							}
-							else if (date.Day == 1){
-								<span>@((MarkupString)date.ToString("d MMM"))</span>
-							}
-							else{
-								<span>@((MarkupString)date.Day.ToString())</span>
-							}
-						}
-					</div>
-					<div class="chart-row chart-lines">
-						@for (int i = 0; i < NumOfDays + 1; i++){
-							<span></span>
-						}
-					</div>
-					@foreach (Segment segment in SegmentDetails.OrderBy(s => s.Start))
-					{
-
-						int fromStart = GetDays(FirstStart, segment.Start) + 2;
-						int length = GetDays(segment.Start, segment.Due);
-						length = length == 0 ? 0 : length + 1;
-
-						<div class="chart-row">
-							<div class="chart-row-item">@SegmentDetails.IndexOf(segment)</div>
-
-							<ul class="chart-row-bars" style="grid-column:@((MarkupString)fromStart.ToString())/@((MarkupString)(fromStart+length).ToString());">
-
-								<ToolTip>
-									<Tip>
-										<div class='d-flex flex-column'>
-											<label>@segment.Name</label>
-											<label>Description - @(segment.Description.Length > 20? segment.Description.Substring(0, 20) : segment.Description)</label>
-											<label>Start Date - @segment.Start.ToLongDateString() @segment.Start.ToShortTimeString()</label>
-											<label>Due Date - @segment.Due.ToLongDateString() @segment.Due.ToShortTimeString()</label>
-										</div>
-									</Tip>
-									<Content>
-										<li class="chart-li">
-											@segment.Name
-										</li>
-									</Content>
-								</ToolTip>
-							</ul>
-						</div>
-					}
-				</div>
-			</div>
-		}
+	<div class="gantt-chart-container bttm-margin">
+		<GanttChart
+		ClickUrl="/segment-page/"
+		Frequency="1"
+		Items="@GanttChartItems"
+		></GanttChart>
 	</div>
 </div>
 
@@ -177,34 +89,14 @@
 
 	private Project ProjectDetails { get; set; } = new Project();
 	private List<Segment> SegmentDetails { get; set; } = new List<Segment>();
-
-	private int NumOfDays { get; set; } = 0;
-	private DateTime FirstStart { get; set; } = new DateTime();
+	private List<GanttChartObject> GanttChartItems { get; set; } = new List<GanttChartObject>();
 
 	private Segment NewSegmentDetails { get; set; } = new Segment();
 
 	protected override async void OnInitialized()
 	{
-		//Gets the User Id from the authenticationStateProvider
-		Claim userIdClaim;
-		try
-		{
-			AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
-			userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
-			if (userIdClaim == default)
-			{
-				navManager.NavigateTo("/access-denied");
-				return;
-			}
-		}
-		catch
-		{
-			return;
-		}
-
-		//Parses UserId from string to int
-		int.TryParse(userIdClaim.Value, out int userId);
-		this.UserId = userId;
+		//Gets User Id by using inherited razor class function
+		UserId = await base.GetUserId();
 
 
 		//Calls API to check if user is allowed to do this project
@@ -217,10 +109,19 @@
 				return;
 			}
 		}
-		catch{
+		catch
+		{
 			return;
 		}
 
+		base.OnInitialized();
+
+		//Loads data to gantt chart
+		LoadData();
+	}
+
+	private async void LoadData()
+	{
 		try
 		{
 			//Gets the project details from API
@@ -243,39 +144,24 @@
 		}
 		SegmentDetails = segments;
 
-
-		//TODO - Creates Gantt Chart
-
-		NumOfDays = GetTotalDays();
-
-
-		StateHasChanged();
-		base.OnInitialized();
-	}
-
-
-	private int GetTotalDays()
-	{
-		Segment firstStart = SegmentDetails.OrderBy(s => s.Start).FirstOrDefault();
-		Segment lastDue = SegmentDetails.OrderByDescending(s => s.Due).FirstOrDefault();
-
-		if (firstStart == default || lastDue == default)
+		GanttChartItems = new List<GanttChartObject>();
+		if (segments is not null && segments.Count() > 0)
 		{
-			Console.WriteLine("Return");
-			return 0;
+			foreach (Segment segment in segments)
+			{
+				try
+				{
+					GanttChartItems.Add(new GanttChartObject(segment));
+				}
+				catch
+				{
+					continue;
+				}
+			}
 		}
 
-		FirstStart = firstStart.Start;
-
-		return GetDays(firstStart.Start, lastDue.Due);
+		StateHasChanged();
 	}
-
-	private int GetDays(DateTime Start, DateTime End)
-	{
-		return (End.Date - Start.Date).Days;
-	}
-
-
 
 	private async void AddSegment()
 	{
@@ -306,6 +192,18 @@
 			StateHasChanged();
 			return;
 		}
+		else if (NewSegmentDetails.Start < ProjectDetails.Start)
+		{
+			errorMessage = "Start date cannot be before project start date!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewSegmentDetails.Due > ProjectDetails.Due)
+		{
+			errorMessage = "Due date cannot be after project due date!";
+			StateHasChanged();
+			return;
+		}
 
 		SegmentAndUser newSegment = new SegmentAndUser(UserId, NewSegmentDetails);
 
@@ -324,21 +222,15 @@
 			return;
 		}
 
-		Console.WriteLine("Made it past ;)");
-
 		navManager.Refresh(forceReload: true);
 	}
+
 
 	private Modal modal;
 	private string errorMessage = "";
 
-	private async Task OnShowModalClick()
+	private void OnShowModalClick()
 	{
 		modal.Open();
-	}
-
-	private async Task OnHideModalClick()
-	{
-		modal.Close();
 	}
 }

@@ -15,22 +15,20 @@ namespace TaskBox.Repositories
 			this._projectRepository = projectRepository;
 		}
 
-		public async Task<ApiResponse> CreateSegment(Segment segment, int UserId)
+		public ApiResponse CreateSegment(Segment segment, int UserId)
 		{
 			ApiResponse response = new ApiResponse();
 
 			//Check user has permission to create segments (A or M)
 			ProjectUserPermission userPermission = _projectRepository.GetProjectUserPermission(UserId, segment.OwnerProject);
 
-			Console.WriteLine(userPermission.Permission.ToString());
+			Console.WriteLine($"User {UserId} is adding {segment.Name} to project {segment.OwnerProject} with permission {userPermission.Permission}!");
 			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M")
 			{
 				response.Success = false;
 				response.Message = "User doesn't have the permissions for this";
 				return response;
 			}
-
-
 
 			//Inserts into the database
 			Note note = new Note(segment.Description);
@@ -58,6 +56,34 @@ namespace TaskBox.Repositories
 			return response;
 		}
 
+		public Segment GetSegmentFromId(int SegmentId)
+		{
+			SelectRequest segmentsRequest = new SelectRequest("tblSegment");
+
+			segmentsRequest.AddData("tblSegment", "SegmentId", "Id");
+			segmentsRequest.AddData("tblSegment", "Name");
+			segmentsRequest.AddData("tblProject", "ProjectId", "OwnerProject");
+			segmentsRequest.AddData("tblProject", "Name", "OwnerProjectName");
+			segmentsRequest.AddData("tblSegment", "Start");
+			segmentsRequest.AddData("tblSegment", "Due");
+			segmentsRequest.AddData("tblNote", "Description");
+
+			SelectRequest bugRequest = new SelectRequest("tblBug");
+			bugRequest.AddData("BugId");
+			bugRequest.AddWhere("SegmentCode", SegmentId);
+
+			segmentsRequest.AddData(Functions.Count, bugRequest, "BugNumber");
+
+			segmentsRequest.AddJoin("tblSegment", "NoteCode", "tblNote", "NoteId");
+			segmentsRequest.AddJoin("tblSegment", "ProjectCode", "tblProject", "ProjectId");
+
+			segmentsRequest.AddWhere("tblSegment", "SegmentId", SegmentId);
+
+			List<Segment> segment = _databaseConnection.Select<Segment>(segmentsRequest);
+
+			return segment[0];
+		}
+
 		public List<Segment> GetSegmentsFromProjectId(int ProjectId)
 		{
 			try
@@ -83,6 +109,44 @@ namespace TaskBox.Repositories
 			{
 				return new List<Segment>();
 			}
+		}
+
+		public ProjectUserPermission UserSegmentPermission(int SegmentId, int UserId)
+		{
+			ProjectUserPermission permission = new ProjectUserPermission();
+
+			try
+			{
+				SelectRequest permissionRequest = new SelectRequest("tblProjectUser");
+				permissionRequest.AddData("ProjectUserId");
+				permissionRequest.AddData("tblProjectUser", "ProjectUserId", "Id");
+				permissionRequest.AddData("UserCode");
+				permissionRequest.AddData("ProjectCode");
+				permissionRequest.AddData("Permission");
+
+				permissionRequest.AddJoin("tblProjectUser", "ProjectCode", "tblProject", "ProjectId");
+				permissionRequest.AddJoin("tblProject", "ProjectId", "tblSegment", "ProjectCode");
+
+				permissionRequest.AddWhere("UserCode", UserId);
+				permissionRequest.AddWhere("tblSegment", "SegmentId", SegmentId);
+
+				List<ProjectUserPermission> permissions = _databaseConnection.Select<ProjectUserPermission>(permissionRequest);
+
+				if (permissions.Count() == 0)
+				{
+					permission.UserCode = UserId;
+					permission.Permission = "N";
+				}
+
+				permission = permissions[0];
+			}
+			catch
+			{
+				permission.UserCode = UserId;
+				permission.Permission = "N";
+			}
+
+			return permission;
 		}
 	}
 }

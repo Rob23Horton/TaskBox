@@ -7,12 +7,10 @@ using DatabaseConnection.Attributes;
 
 namespace TaskBox.Shared.Models
 {
-	public class Segment : GanttChartObject
+	public class TaskBoxTask : GanttChartObject
 	{
 		[InsertIgnore]
 		public override int Id { get; set; }
-		public int OwnerProject { get; set; }
-		public string OwnerProjectName { get; set; } = "";
-		public long BugNumber { get; set; }
+		public int SegmentCode { get; set; }
 	}
 }

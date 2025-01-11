@@ -1,0 +1,238 @@
+﻿@page "/segment-page/{SegmentId}"
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{base.BuildRenderTree(__builder);}
+
+<div class="d-flex flex-column page">
+	<h1><a href="/project-page/@SegmentDetails.OwnerProject">@SegmentDetails.OwnerProjectName</a> - @SegmentDetails.Name</h1>
+	<div class="bttm-margin">
+		<span>From @SegmentDetails.Start.ToLongDateString() @SegmentDetails.Start.ToShortTimeString()</span>
+		<span>To @SegmentDetails.Due.ToLongDateString() @SegmentDetails.Due.ToShortTimeString()</span>
+	</div>
+
+	<div class="d-grid bttm-margin info-container">
+		<div class="description-container">
+			<span style="white-space: pre-line">
+				@SegmentDetails.Description
+			</span>
+		</div>
+		<div class="bug-container">
+			<button type="button" @onclick="GoToBugPage">Number Of Bugs - @SegmentDetails.BugNumber</button>
+		</div>
+	</div>
+	<div class="d-grid bttm-margin">
+		<div class="segment-label-container">
+			<label>Tasks - </label>
+		</div>
+		<div class="add-segments-container">
+			<button class="add-segment-btn" type="button" @onclick="ShowModal">Add Task</button>
+		</div>
+	</div>
+
+	<div>
+		<GanttChart
+		ClickUrl="/task-page/"
+		Frequency="1"
+		Items="@GanttChartTasks"
+		></GanttChart>
+	</div>
+</div>
+
+
+<Modal @ref="modal">
+	<Title>Task Segment</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div class="w-100">
+				<InputText class="w-100" placeholder="Task Name (Max 24 chars)" maxlength="24" @bind-Value="@NewTaskDetails.Name" />
+			</div>
+			<div class="w-100">
+				<InputTextArea class="w-100" placeholder="Description" @bind-Value="@NewTaskDetails.Description" />
+			</div>
+			<div class="form-control d-flex flex-column">
+				<label>Start Date -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@NewTaskDetails.Start"></InputDate>
+			</div>
+			<div class="form-control d-flex flex-column">
+				<label>Due Date -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@NewTaskDetails.Due"></InputDate>
+			</div>
+			<div>
+				<label>@errorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="AddTask">Create</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
+
+
+@code
+{
+	[Parameter]
+	public string SegmentId
+	{
+		get
+		{
+			return this.Id.ToString();
+		}
+		set
+		{
+			int.TryParse(value, out int id);
+			this.Id = id;
+		}
+	}
+	private int Id { get; set; }
+	private int UserId { get; set; }
+
+	private Segment SegmentDetails { get; set; } = new Segment();
+
+	private List<TaskBoxTask> Tasks { get; set; } = new List<TaskBoxTask>();
+	private List<GanttChartObject> GanttChartTasks { get; set; } = new List<GanttChartObject>();
+
+	private DateTime FirstStart { get; set; } = DateTime.Now;
+
+	private TaskBoxTask NewTaskDetails { get; set; } = new TaskBoxTask();
+	private string errorMessage = "";
+
+	protected override async void OnInitialized()
+	{
+		UserId = await base.GetUserId();
+
+
+		//Calls API to check if user is allowed to do this project
+		try
+		{
+			bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Segment/CheckPermission?UserId={UserId}&SegmentId={Id}");
+			if (permission == false)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+		}
+		catch
+		{
+			return;
+		}
+
+
+		base.OnInitialized();
+
+		GetSegmentData();
+	}
+
+
+	private async void GetSegmentData()
+	{
+		try
+		{
+			//Gets the Segment details from API
+			SegmentDetails = await httpClient.GetFromJsonAsync<Segment>($"/api/Segment/GetSegment?SegmentId={Id}");
+		}
+		catch
+		{
+			navManager.NavigateTo("/not-existant");
+		}
+
+		try
+		{
+			Tasks = await httpClient.GetFromJsonAsync<List<TaskBoxTask>>($"/api/Task/TasksFromSegmentId?SegmentId={Id}");
+		}
+		catch
+		{
+			Tasks = new List<TaskBoxTask>();
+		}
+
+		//Casts all tasks to GanttChartObjects so that Gantt Chart can be used
+		GanttChartTasks = new List<GanttChartObject>();
+		foreach (TaskBoxTask task in Tasks)
+		{
+			GanttChartTasks.Add(new GanttChartObject(task));
+		}
+
+		StateHasChanged();
+	}
+
+	private Modal modal;
+
+	private void ShowModal()
+	{
+		modal.Open();
+	}
+
+	private async void AddTask()
+	{
+		NewTaskDetails.SegmentCode = Id;
+
+		//Validation on Modal
+		if (string.IsNullOrWhiteSpace(NewTaskDetails.Name))
+		{
+			errorMessage = "Name cannot be blank!";
+			StateHasChanged();
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(NewTaskDetails.Description))
+		{
+			errorMessage = "Description cannot be blank!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewTaskDetails.Start > NewTaskDetails.Due)
+		{
+			errorMessage = "Due date cannot be before start date!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewTaskDetails.Start < DateTime.Now.AddYears(-1))
+		{
+			errorMessage = "Start date cannot be more than a year ago!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewTaskDetails.Start < SegmentDetails.Start)
+		{
+			errorMessage = "Start date cannot be before segment start date!";
+			StateHasChanged();
+			return;
+		}
+		else if (NewTaskDetails.Due > SegmentDetails.Due)
+		{
+			errorMessage = "Due date cannot be after segment due date!";
+			StateHasChanged();
+			return;
+		}
+
+		TaskAndUser newTask = new TaskAndUser(UserId, NewTaskDetails);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<TaskAndUser>("/api/Task/CreateTask", newTask);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			errorMessage = "Something went wrong";
+			StateHasChanged();
+			return;
+		}
+		else if (success.Success == false)
+		{
+			errorMessage = success.Message;
+			StateHasChanged();
+			return;
+		}
+
+		navManager.Refresh(forceReload: true);
+	}
+
+	private void GoToBugPage()
+	{
+		navManager.NavigateTo($"/bug-page/{SegmentDetails.Id}");
+	}
+}
