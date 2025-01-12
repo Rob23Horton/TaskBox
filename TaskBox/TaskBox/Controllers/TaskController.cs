@@ -15,6 +15,36 @@ namespace TaskBox.Controllers
 			this._taskRepository = taskRepository;
 		}
 
+		[HttpGet("GetTask")]
+		[ProducesResponseType(200, Type = typeof(TaskBoxTask))]
+		[ProducesResponseType(400)]
+		public IActionResult GetTask(int TaskId)
+		{
+			try
+			{
+				return Ok(_taskRepository.GetTask(TaskId));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
+		[HttpGet("CheckPermission")]
+		[ProducesResponseType(200, Type=typeof(bool))]
+		[ProducesResponseType(400, Type=typeof(bool))]
+		public IActionResult CheckPermission(int UserId, int TaskId)
+		{
+			try
+			{
+				return Ok(_taskRepository.CheckPermission(UserId, TaskId).Permission.ToUpper() != "N"? true : false);
+			}
+			catch
+			{
+				return BadRequest(false);
+			}
+		}
+
 		[HttpGet("TasksFromSegmentId")]
 		[ProducesResponseType(200, Type=typeof(List<TaskBoxTask>))]
 		[ProducesResponseType(400)]
@@ -33,7 +63,7 @@ namespace TaskBox.Controllers
 		[HttpPost("CreateTask")]
 		[ProducesResponseType(200, Type = typeof(ApiResponse))]
 		[ProducesResponseType(400, Type = typeof(ApiResponse))]
-		public IActionResult CreateSegment(TaskAndUser newSegment)
+		public IActionResult CreateTask(TaskAndUser newSegment)
 		{
 			ApiResponse response = new ApiResponse();
 			try

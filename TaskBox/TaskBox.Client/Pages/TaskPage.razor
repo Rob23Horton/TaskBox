@@ -1,0 +1,191 @@
+﻿@page "/task-page/{TaskId}"
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{base.BuildRenderTree(__builder);}
+
+@if (TaskDetails is not null)
+{
+	<div>
+		<h1><a href="/project-page/@TaskDetails.ProjectCode">@TaskDetails.ProjectName</a> - <a href="/segment-page/@TaskDetails.SegmentCode">@TaskDetails.SegmentName</a> - @TaskDetails.Name</h1>
+		<div class="bttm-margin">
+			<span>From @TaskDetails.Start.ToLongDateString() @TaskDetails.Start.ToShortTimeString()</span>
+			<span>To @TaskDetails.Due.ToLongDateString() @TaskDetails.Due.ToShortTimeString()</span>
+		</div>
+		<div class="d-grid bttm-margin">
+			<div class="description-container">
+				<span style="white-space: pre-line">
+					@TaskDetails.Description
+				</span>
+			</div>
+			<div class="log-time-container">
+				<button type="button" >Log Time</button>
+			</div>
+		</div>
+		<div class="d-grid bttm-margin">
+			<div class="checkbox-label-container">
+				<label>Checkboxes -</label>
+			</div>
+			<div class="create-checkbox-container">
+				<button type="button" @onclick="@(() => OpenModal(new Checkbox(), "Create"))">Create Checkbox</button>
+			</div>
+		</div>
+		<table class="w-100">
+			<tr>
+				<th>Name</th>
+				<th>Finished</th>
+				<th>Edit</th>
+			</tr>
+			@foreach (Checkbox checkbox in Checkboxes)
+			{
+				<tr>
+					<td>@checkbox.Name</td>
+					<td><input type="checkbox" style="pointer-events: none;" checked="@checkbox.Checked"></td>
+					<td><button type="button" @onclick="@(() => OpenModal(checkbox, "Edit"))">Edit</button></td>
+				</tr>
+			}
+		</table>
+
+
+	</div>
+
+	<Modal @ref="modal">
+		<Title>@EditOrCreate Checkbox</Title>
+		<Body>
+			<div class="d-flex flex-column">
+				<div class="w-100 bttm-margin">
+					<InputText class="w-100" placeholder="Checkbox Name (Max 64 chars)" maxlength="64" @bind-Value="@CurrentCheckbox.Name" />
+				</div>
+				<div class="w-100 d-flex flex-row">
+					<label>Finished - </label>
+					<input type="checkbox" style="margin-left: 10px;transform:scale(2);" checked="@CurrentCheckbox.Checked" @bind-value="@CurrentCheckbox.Checked">
+				</div>
+				<div>
+					<label>@errorMessage</label>
+				</div>
+			</div>
+		</Body>
+		<Footer>
+			<div>
+				<button type="button" class="btn btn-success" @onclick="SaveCheckbox">Save</button>
+				<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+			</div>
+		</Footer>
+	</Modal>
+}
+
+@code
+{
+	[Parameter]
+	public string TaskId
+	{
+		get
+		{
+			return this.Id.ToString();
+		}
+		set
+		{
+			int.TryParse(value, out int id);
+			this.Id = id;
+		}
+	}
+	private int Id { get; set; }
+	private int UserId { get; set; }
+
+	private TaskBoxTask TaskDetails { get; set; }
+	private List<Checkbox> Checkboxes { get; set; }
+
+	protected override async void OnInitialized()
+	{
+
+		UserId = await GetUserId();
+
+		//Calls API to check if user is allowed to do this project
+		try
+		{
+			bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Task/CheckPermission?UserId={UserId}&TaskId={Id}");
+			if (permission == false)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+		}
+		catch
+		{
+			return;
+		}
+
+		TaskDetails = await httpClient.GetFromJsonAsync<TaskBoxTask>($"/api/Task/GetTask?TaskId={Id}");
+		Checkboxes = await httpClient.GetFromJsonAsync<List<Checkbox>>($"/api/Checkbox/GetCheckboxesFromTaskId?TaskId={Id}");
+
+		base.OnInitialized();
+
+		StateHasChanged();
+	}
+
+	private Modal modal;
+	private Checkbox CurrentCheckbox = new Checkbox();
+	private string EditOrCreate = "Edit";
+	private string errorMessage = "";
+
+	private void OpenModal(Checkbox Checkbox, string EditOrCreate)
+	{
+		this.EditOrCreate = EditOrCreate;
+		CurrentCheckbox = new Checkbox(Checkbox);
+		modal.Open();
+	}
+
+	private async void SaveCheckbox()
+	{
+		if (string.IsNullOrWhiteSpace(CurrentCheckbox.Name))
+		{
+			errorMessage = "Name cannot be blank!";
+			return;
+		}
+
+
+		//Updates checkbox
+		if (EditOrCreate == "Edit")
+		{
+			Checkbox sourceCheckbox = Checkboxes.Where(c => c.Id == CurrentCheckbox.Id).First();
+
+			sourceCheckbox.Name = CurrentCheckbox.Name;
+			sourceCheckbox.Checked = CurrentCheckbox.Checked;
+
+			CheckboxAndUser newCheckbox = new CheckboxAndUser(UserId, CurrentCheckbox);
+
+			HttpResponseMessage response = await httpClient.PostAsJsonAsync<CheckboxAndUser>("/api/Checkbox/UpdateCheckbox", newCheckbox);
+			ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+			if (success.Success == false)
+			{
+				errorMessage = success.Message;
+				return;
+			}
+
+		}
+		//Creates new checkbox
+		else
+		{
+			CurrentCheckbox.TaskCode = Id;
+			CheckboxAndUser newCheckbox = new CheckboxAndUser(UserId, CurrentCheckbox);
+
+			HttpResponseMessage response = await httpClient.PostAsJsonAsync<CheckboxAndUser>("/api/Checkbox/CreateCheckbox", newCheckbox);
+			ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+			if (success.Success == false)
+			{
+				errorMessage = success.Message;
+				return;
+			}
+
+			navManager.Refresh(forceReload: true);
+		}
+
+		modal.Close();
+		StateHasChanged();
+	}
+}

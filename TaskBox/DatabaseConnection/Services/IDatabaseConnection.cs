@@ -12,5 +12,6 @@ namespace DatabaseConnection.Services
 		public List<T> Select<T>(SelectRequest request);
 		public void Insert(InsertRequest request);
 		public void Insert<T>(InsertRequest request, T insertData);
+		public void Update<T>(SelectRequest request, T updateData);
 	}
 }

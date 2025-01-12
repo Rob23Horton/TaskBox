@@ -1,0 +1,26 @@
+﻿
+.bttm-margin {
+	margin-bottom: 1vh;
+}
+
+.description-container{
+	grid-column: 1;
+}
+
+.log-time-container {
+	grid-column: 2;
+}
+
+
+.checkbox-label-container{
+	grid-column: 1;
+}
+
+.create-checkbox-container {
+	grid-column: 2;
+	justify-self: right;
+}
+
+td, th{
+	border: 1px solid black;
+}
