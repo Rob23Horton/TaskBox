@@ -15,14 +15,14 @@
 			<span>From @TaskDetails.Start.ToLongDateString() @TaskDetails.Start.ToShortTimeString()</span>
 			<span>To @TaskDetails.Due.ToLongDateString() @TaskDetails.Due.ToShortTimeString()</span>
 		</div>
-		<div class="d-grid bttm-margin">
+		<div class="d-grid bttm-margin info-container">
 			<div class="description-container">
 				<span style="white-space: pre-line">
 					@TaskDetails.Description
 				</span>
 			</div>
 			<div class="log-time-container">
-				<button type="button" >Log Time</button>
+				<button type="button" @onclick="GoToLogTimePage">Log Time</button>
 			</div>
 		</div>
 		<div class="d-grid bttm-margin">
@@ -124,6 +124,11 @@
 		base.OnInitialized();
 
 		StateHasChanged();
+	}
+
+	private void GoToLogTimePage()
+	{
+		navManager.NavigateTo($"/log-time-page/{Id}");
 	}
 
 	private Modal modal;
