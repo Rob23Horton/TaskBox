@@ -1,0 +1,34 @@
+﻿
+.bttm-margin {
+	margin-bottom: 1vh;
+}
+
+.info-container{
+	min-height: 15vh;
+}
+
+.description-container {
+	grid-column: 1;
+}
+
+.log-time-container {
+	grid-column: 2;
+}
+
+	.log-time-container > button {
+		width: 100%;
+		height: 100%;
+	}
+
+.checkbox-label-container{
+	grid-column: 1;
+}
+
+.create-checkbox-container {
+	grid-column: 2;
+	justify-self: right;
+}
+
+td, th{
+	border: 1px solid black;
+}

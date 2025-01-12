@@ -179,8 +179,6 @@ namespace DatabaseConnection.Services
 			}
 			query += ";";
 
-			Console.WriteLine($"Select Query - {query}");
-
 			MySqlCommand cmd = new MySqlCommand(query, _connection);
 			MySqlDataReader dataReader = cmd.ExecuteReader();
 
@@ -309,6 +307,51 @@ namespace DatabaseConnection.Services
 			values = $"{values.Substring(0, values.Length - 2)})";
 
 			query += $"{valueNames} VALUES {values};";
+
+			if (ConnectToDatabase() == false)
+				return;
+
+			MySqlCommand cmd = new MySqlCommand(query, _connection);
+			cmd.ExecuteNonQuery();
+
+			DisconnectFromDatabase();
+		}
+
+		public void Update<T>(SelectRequest request, T updateData)
+		{
+			string query = $"UPDATE {request.Table} SET ";
+
+			Type tType = typeof(T);
+			PropertyInfo[] propertyInfo = tType.GetProperties();
+
+			foreach (PropertyInfo currentPropertyInfo in propertyInfo.Where(p => !Attribute.IsDefined(p, typeof(InsertIgnore))))
+			{
+				query += $"{currentPropertyInfo.Name} = ";
+
+				object value = currentPropertyInfo.GetValue(updateData)!;
+
+				if (value is string strVal)
+				{
+					query += $"'{strVal}', ";
+				}
+				else if (value is int intVal)
+				{
+					query += $"{intVal}, ";
+				}
+				else if (value is bool boolVal)
+				{
+					query += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (value is DateTime dateVal)
+				{
+					query += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
+			}
+			query = $"{query.Substring(0, query.Length - 2)}";
+
+			query += $" WHERE {request.Table}.{request.WhereData[0].ValueName} = {request.WhereData[0].Value};";
+
+			Console.WriteLine($"Update Query - {query}");
 
 			if (ConnectToDatabase() == false)
 				return;

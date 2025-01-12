@@ -23,7 +23,7 @@ namespace TaskBox.Repositories
 			ProjectUserPermission userPermission = _projectRepository.GetProjectUserPermission(UserId, segment.OwnerProject);
 
 			Console.WriteLine($"User {UserId} is adding {segment.Name} to project {segment.OwnerProject} with permission {userPermission.Permission}!");
-			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M")
+			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M" && userPermission.Permission.ToUpper() != "S")
 			{
 				response.Success = false;
 				response.Message = "User doesn't have the permissions for this";

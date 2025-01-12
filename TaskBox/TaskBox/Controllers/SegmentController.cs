@@ -60,7 +60,6 @@ namespace TaskBox.Controllers
 			}
 			catch
 			{
-				
 				response.Success = false;
 				response.Message = "Something went wrong. Please try again later!";
 				return BadRequest(response);
