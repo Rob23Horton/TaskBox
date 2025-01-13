@@ -13,6 +13,11 @@ namespace TaskBox.Shared.Models
 		{
 			Description = "";
 		}
+		public Note(int id, string description)
+		{
+			Id = id;
+			Description = description;
+		}
 
 		public Note(string Description)
 		{

@@ -69,7 +69,7 @@ namespace TaskBox.Repositories
 				return response;
 			}
 
-			SelectRequest updateCheckbox = new SelectRequest("tblCheckbox");
+			UpdateRequest updateCheckbox = new UpdateRequest("tblCheckbox");
 
 			updateCheckbox.AddWhere("CheckboxId", Checkbox.Id);
 

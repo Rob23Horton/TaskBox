@@ -317,7 +317,49 @@ namespace DatabaseConnection.Services
 			DisconnectFromDatabase();
 		}
 
-		public void Update<T>(SelectRequest request, T updateData)
+		public void Update(UpdateRequest request)
+		{
+			string query = $"UPDATE {request.Table} SET";
+
+			string queryValues = "";
+			foreach (KeyValuePair<string, object> Value in request.Values)
+			{
+				queryValues += $"{Value.Key} = ";
+
+				if (Value.Value is string strVal)
+				{
+					queryValues += $"'{strVal}', ";
+				}
+				else if (Value.Value is int intVal)
+				{
+					queryValues += $"{intVal}, ";
+				}
+				else if (Value.Value is bool boolVal)
+				{
+					queryValues += $"b'{(boolVal ? '1' : '0')}', ";
+				}
+				else if (Value.Value is DateTime dateVal)
+				{
+					queryValues += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+				}
+			}
+
+			queryValues = $"{queryValues.Substring(0, queryValues.Length - 2)}";
+
+			query = $"{query} {queryValues} WHERE {request.Table}.{request.WhereData[0].ValueName} = {request.WhereData[0].Value};";
+
+			Console.WriteLine($"Update Query - {query}");
+
+			if (ConnectToDatabase() == false)
+				return;
+
+			MySqlCommand cmd = new MySqlCommand(query, _connection);
+			cmd.ExecuteNonQuery();
+
+			DisconnectFromDatabase();
+		}
+
+		public void Update<T>(UpdateRequest request, T updateData)
 		{
 			string query = $"UPDATE {request.Table} SET ";
 
