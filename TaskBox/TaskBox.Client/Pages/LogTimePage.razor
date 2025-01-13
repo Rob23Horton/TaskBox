@@ -7,16 +7,56 @@
 
 @{base.BuildRenderTree(__builder);}
 
+<div>
+	<h1>@UserDetails.UserName</h1>
+	<div>
+		<table class="w-100">
+			<tr>
+				<th>Name</th>
+				<th>Description</th>
+				<th>Start</th>
+				<th>Length<br />(Minutes)</th>
+				<th>End</th>
+				<th>Task</th>
+				<th>Edit</th>
+			</tr>
+			@foreach (TimeLog timeLog in TimeLogs)
+			{
+				<tr>
+					<td>@timeLog.Name</td>
+					<td>@(timeLog.Description.Length > 40? timeLog.Description.Substring(0, 40): timeLog.Description)</td>
+					<td>@timeLog.Start.TimeOfDay.ToString()</td>
+					<td>@((timeLog.End - timeLog.Start).Minutes)</td>
+					<td>@timeLog.End.TimeOfDay.ToString()</td>
+					<td><a href="/task-page/@timeLog.TaskCode">@timeLog.TaskName</a></td>
+					<td><button type="button" >Edit</button></td>
+				</tr>
+			}
+		</table>
+	</div>
+</div>
+
 @code
 {
-	private int UserId { get; set; }
+	private User UserDetails { get; set; } = new User();
+	private List<TimeLog> TimeLogs { get; set; } = new List<TimeLog>();
 
 	protected override async void OnInitialized()
 	{
-		UserId = await GetUserId();
+		UserDetails.Id = await GetUserId();
+		UserDetails.UserName = await GetUserName();
 
-		//TODO - Load time log data
+		//Loads User and time log data
+		try
+		{
+			TimeLogs = await httpClient.GetFromJsonAsync<List<TimeLog>>($"/api/LogTime/GetTimeLogs?UserId={UserDetails.Id}");
+		}
+		catch
+		{
+		}
 
 		base.OnInitialized();
+
+		StateHasChanged();
 	}
 }

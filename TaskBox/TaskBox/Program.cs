@@ -24,6 +24,7 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ISegmentRepository, SegmentRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ICheckboxRepository, CheckboxRepository>();
+builder.Services.AddScoped<ILogTimeRepository, LogTimeRepository>();
 
 //Adds API Controllers
 builder.Services.AddControllers();
