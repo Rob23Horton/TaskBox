@@ -1,0 +1,17 @@
+﻿
+.bttm-margin {
+	margin-bottom: 1vh;
+}
+
+.bug-label-container{
+	grid-column: 1;
+}
+
+.create-bug-container{
+	grid-column: 2;
+	justify-self: right;
+}
+
+th, td{
+	border: 1px solid black;
+}

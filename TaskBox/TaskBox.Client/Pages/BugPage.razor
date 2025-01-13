@@ -1,0 +1,313 @@
+﻿@page "/bug-page/{sSegmentId}";
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{
+	base.BuildRenderTree(__builder);
+}
+
+
+<div>
+	<h1><a href="/project-page/@SegmentDetails.OwnerProject">@SegmentDetails.OwnerProjectName</a> - <a href="/segment-page/@SegmentDetails.Id">@SegmentDetails.Name</a></h1>
+	<div class="d-grid">
+		<div class="bug-label-container  bttm-margin">
+			<label>Bugs -</label>
+		</div>
+		<div class="create-bug-container">
+			<button type="button" @onclick="@(() => createModal.Open())">Create Bug</button>
+		</div>
+	</div>
+	<div class="d-grid  bttm-margin">
+		<div class="bug-label-container">
+			@*Drop down list for ordering*@
+			<InputSelect @bind-Value="@Order" @bind-Value:after="UpdateBugsList">
+				<option value="Asc">Oldest</option>
+				<option value="Des">Newest</option>
+				<option value="Name">By Name</option>
+			</InputSelect>
+		</div>
+		<div class ="create-bug-container d-flex flex-row">
+			@*Checkboxes for whether to show Completed, not Completed*@
+			<div>
+				<label>Show Completed - </label>
+				<input type="checkbox" style="margin: 0px 10px 0px 10px;transform:scale(2);" checked="@ShowCompleted" @bind-value="@ShowCompleted" @bind-value:after="UpdateBugsList">
+			</div>
+			<div>
+				<label>Show Not Completed - </label>
+				<input type="checkbox" style="margin: 0px 10px 0px 10px;transform:scale(2);" checked="@ShowNotCompleted" @bind-value="@ShowNotCompleted" @bind-value:after="UpdateBugsList">
+			</div>
+		</div>
+	</div>
+	<div>
+		<table class="w-100">
+			<tr>
+				<th>Name</th>
+				<th>Description</th>
+				<th>Edit</th>
+				<th>Completed</th>
+			</tr>
+
+			@foreach (Bug bug in CurrentBugs)
+			{
+				<tr>
+					<td>@bug.Name</td>
+					<td>@(bug.Description.Length > 120 ? bug.Description.Substring(0, 120) : bug.Description)</td>
+					<td><input type="checkbox" style="pointer-events: none;" checked="@bug.Completed"></td>
+					<td><button type="button" @onclick="@(() => OpenEditBug(bug))">Edit</button></td>
+				</tr>
+			}
+
+		</table>
+	</div>
+</div>
+
+<Modal @ref="createModal">
+	<Title>Create Bug</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div class="w-100 bttm-margin">
+				<InputText class="w-100" placeholder="Checkbox Name (Max 24 chars)" maxlength="24" @bind-Value="@NewBugDetails.Name" />
+			</div>
+			<div class="w-100">
+				<InputTextArea class="w-100" placeholder="Description" @bind-Value="@NewBugDetails.Description" />
+			</div>
+			<div>
+				<label>@createErrorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="AddBug">Create</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => createModal.Close()">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
+
+<Modal @ref="editModal">
+	<Title>Edit Bug</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div class="w-100 bttm-margin">
+				<InputText class="w-100" placeholder="Checkbox Name (Max 24 chars)" maxlength="24" @bind-Value="@CurrentBug.Name" />
+			</div>
+			<div>
+				<label>Created - @CurrentBug.CreatedDate.ToLongDateString() at @CurrentBug.CreatedDate.ToLongTimeString()</label>
+			</div>
+			<div class="w-100">
+				<InputTextArea class="w-100" placeholder="Description" @bind-Value="@CurrentBug.Description" />
+			</div>
+			<div>
+				<label>Completed - </label>
+				<input type="checkbox" style="margin: 0px 10px 0px 10px;transform:scale(2);" checked="@CurrentBug.Completed" @bind-value="@CurrentBug.Completed">
+			</div>
+			<div>
+				<label>@createErrorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="EditBug">Edit</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => editModal.Close()">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
+
+@code
+{
+	[Parameter]
+	public string sSegmentId
+	{
+		get
+		{
+			return this.SegmentId.ToString();
+		}
+		set
+		{
+			int.TryParse(value, out int id);
+			this.SegmentId = id;
+		}
+	}
+	private int SegmentId { get; set; }
+	private int UserId { get; set; }
+
+	private Segment SegmentDetails { get; set; } = new Segment();
+	private List<Bug> Bugs { get; set; } = new List<Bug>();
+	private List<Bug> CurrentBugs { get; set; } = new List<Bug>();
+
+	private bool ShowCompleted { get; set; } = false;
+	private bool ShowNotCompleted { get; set; } = true;
+	private string Order { get; set; } = "Asc";
+
+	protected override async void OnInitialized()
+	{
+		UserId = await GetUserId();
+
+		try
+		{
+			bool permission = await httpClient.GetFromJsonAsync<bool>($"/api/Segment/CheckPermission?UserId={UserId}&SegmentId={SegmentId}");
+			if (permission == false)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+		}
+		catch
+		{
+			return;
+		}
+
+		//Gets the Segment details from API
+		Segment? segment = await httpClient.GetFromJsonAsync<Segment>($"/api/Segment/GetSegment?SegmentId={SegmentId}");
+		if (segment is null)
+		{
+			navManager.NavigateTo("/access-denied");
+			return;
+		}
+		SegmentDetails = segment;
+
+		//Gets all bugs for segment
+		Bugs = await httpClient.GetFromJsonAsync<List<Bug>>($"/api/Bug/GetBugs?SegmentId={SegmentId}");
+
+		base.OnInitialized();
+
+		UpdateBugsList();
+	}
+
+
+	private void UpdateBugsList()
+	{
+		CurrentBugs = new List<Bug>();
+
+		//Adds Completed bugs
+		if (ShowCompleted)
+		{
+			CurrentBugs.AddRange(Bugs.Where(c => c.Completed == true).ToList());
+		}
+		//Adds Not Completed bugs
+		if (ShowNotCompleted)
+		{
+			CurrentBugs.AddRange(Bugs.Where(c => c.Completed == false).ToList());
+		}
+
+		if (Order == "Des")
+		{
+			CurrentBugs = CurrentBugs.OrderByDescending(c => c.CreatedDate).ToList();
+		}
+		else if (Order == "Asc")
+		{
+			CurrentBugs = CurrentBugs.OrderBy(c => c.CreatedDate).ToList();
+		}
+		else if (Order == "Name")
+		{
+			CurrentBugs = CurrentBugs.OrderBy(c => c.Name).ToList();
+		}
+
+
+		StateHasChanged();
+	}
+
+	//Create Bug Modal Code
+	private Modal createModal;
+	private string createErrorMessage = "";
+	private Bug NewBugDetails = new Bug();
+
+	private async void AddBug()
+	{
+		if (string.IsNullOrWhiteSpace(NewBugDetails.Name))
+		{
+			createErrorMessage = "Name cannot be blank!";
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(NewBugDetails.Description))
+		{
+			createErrorMessage = "Description cannot be blank!";
+			return;
+		}
+
+		NewBugDetails.CreatedDate = DateTime.Now;
+		NewBugDetails.Completed = false;
+		NewBugDetails.SegmentCode = SegmentId;
+
+		BugAndUser newBug = new BugAndUser(NewBugDetails, UserId);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<BugAndUser>("/api/Bug/CreateBug", newBug);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			createErrorMessage = "Something went wrong";
+			StateHasChanged();
+			return;
+		}
+		else if (!success.Success)
+		{
+			createErrorMessage = success.Message;
+			StateHasChanged();
+			return;
+		}
+
+		createModal.Close();
+		NewBugDetails = new Bug();
+
+		Bugs.Add(new Bug(newBug.Bug));
+		UpdateBugsList();
+	}
+
+	private Modal editModal;
+	private string editErrorMessage = "";
+	private Bug CurrentBug = new Bug();
+
+	private void OpenEditBug(Bug selectedBug)
+	{
+		CurrentBug = new Bug(selectedBug);
+		editModal.Open();
+	}
+
+	private async void EditBug()
+	{
+		if (string.IsNullOrWhiteSpace(CurrentBug.Name))
+		{
+			createErrorMessage = "Name cannot be blank!";
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(CurrentBug.Description))
+		{
+			createErrorMessage = "Description cannot be blank!";
+			return;
+		}
+
+		//Sends bug to server
+		BugAndUser updatedBug = new BugAndUser(CurrentBug, UserId);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<BugAndUser>("/api/Bug/UpdateBug", updatedBug);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			editErrorMessage = "Something went wrong";
+			StateHasChanged();
+			return;
+		}
+		else if (!success.Success)
+		{
+			editErrorMessage = success.Message;
+			StateHasChanged();
+			return;
+		}
+
+		editModal.Close();
+
+		//Updates bug list and visuals
+		Bug editedBug = Bugs.Where(b => b.Id == CurrentBug.Id).First();
+		editedBug.Name = CurrentBug.Name;
+		editedBug.Description = CurrentBug.Description;
+		editedBug.Completed = CurrentBug.Completed;
+
+		UpdateBugsList();
+	}
+}
