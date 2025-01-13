@@ -23,6 +23,11 @@
 	<div class="d-grid  bttm-margin">
 		<div class="bug-label-container">
 			@*Drop down list for ordering*@
+			<InputSelect @bind-Value="@Order" @bind-Value:after="UpdateBugsList">
+				<option value="Asc">Oldest</option>
+				<option value="Des">Newest</option>
+				<option value="Name">By Name</option>
+			</InputSelect>
 		</div>
 		<div class ="create-bug-container d-flex flex-row">
 			@*Checkboxes for whether to show Completed, not Completed*@
@@ -246,7 +251,11 @@
 			return;
 		}
 
-		navManager.Refresh(forceReload: true);
+		createModal.Close();
+		NewBugDetails = new Bug();
+
+		Bugs.Add(new Bug(newBug.Bug));
+		UpdateBugsList();
 	}
 
 	private Modal editModal;
@@ -300,6 +309,5 @@
 		editedBug.Completed = CurrentBug.Completed;
 
 		UpdateBugsList();
-		StateHasChanged();
 	}
 }
