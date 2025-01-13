@@ -1,0 +1,22 @@
+﻿@page "/log-time-page";
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{base.BuildRenderTree(__builder);}
+
+@code
+{
+	private int UserId { get; set; }
+
+	protected override async void OnInitialized()
+	{
+		UserId = await GetUserId();
+
+		//TODO - Load time log data
+
+		base.OnInitialized();
+	}
+}

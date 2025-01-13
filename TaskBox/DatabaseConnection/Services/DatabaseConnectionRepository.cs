@@ -34,7 +34,7 @@ namespace DatabaseConnection.Services
 		{
 			try
 			{
-				string connString = "server=192.168.1.193;uid=TaskBoxAdmin;pwd=TaskBoxPassword;database=TaskBox";
+				string connString = "server=localhost;uid=TaskBoxAdmin;pwd=TaskBoxPassword;database=TaskBox";
 				_connection = new MySqlConnection(connString);
 
 				_connection.Open();
