@@ -14,6 +14,6 @@ namespace TaskBox.Shared.Models
 		public int SegmentCode { get; set; }
 		public int ProjectCode { get; set; }
 		public string ProjectName { get; set; } = "";
-		public string SegmentName { get; set; }
+		public string SegmentName { get; set; } = "";
 	}
 }
