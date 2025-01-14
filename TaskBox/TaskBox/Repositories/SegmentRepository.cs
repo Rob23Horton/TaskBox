@@ -71,6 +71,7 @@ namespace TaskBox.Repositories
 			SelectRequest bugRequest = new SelectRequest("tblBug");
 			bugRequest.AddData("BugId");
 			bugRequest.AddWhere("SegmentCode", SegmentId);
+			bugRequest.AddWhere("Completed", false);
 
 			segmentsRequest.AddData(Functions.Count, bugRequest, "BugNumber");
 
