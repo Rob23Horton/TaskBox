@@ -9,6 +9,22 @@ namespace TaskBox.Shared.Models
 {
 	public class TimeLog
 	{
+		public TimeLog()
+		{
+			
+		}
+
+		public TimeLog(TimeLog TimeLog)
+		{
+			this.Id = TimeLog.Id;
+			this.Name = TimeLog.Name;
+			this.TaskCode = TimeLog.TaskCode;
+			this.TaskName = TimeLog.TaskName;
+			this.Start = TimeLog.Start;
+			this.End = TimeLog.End;
+			this.Description = TimeLog.Description;
+		}
+
 		[InsertIgnore]
 		public int Id { get; set; }
 		public string Name { get; set; }

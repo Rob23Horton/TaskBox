@@ -30,7 +30,7 @@
 			</InputSelect>
 		</div>
 		<div class="create-log-container">
-			<button type="button" >Create Time Log</button>
+			<button type="button" @onclick="CreateModal">Create Time Log</button>
 		</div>
 	</div>
 	<div class="bttm-margin">
@@ -54,12 +54,47 @@
 					<td>@(difference.Hours) Hours @(difference.Minutes) Mins</td>
 					<td>@timeLog.End.ToShortTimeString()</td>
 					<td><a href="/task-page/@timeLog.TaskCode">@timeLog.TaskName</a></td>
-					<td><button type="button" >Edit</button></td>
+					<td><button type="button" @onclick="@(() => EditModal(timeLog))">Edit</button></td>
 				</tr>
 			}
 		</table>
 	</div>
 </div>
+
+<Modal @ref="modal">
+	<Title>@EditOrCreate Time Log</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div>
+				<InputText class="form-control" placeholder="Time Log Name (Max 24 chars)" maxlength="24" @bind-Value="@NewTimeLog.Name" />
+			</div>
+			<div>
+				<InputTextArea class="form-control" placeholder="Description" @bind-Value="@NewTimeLog.Description" />
+			</div>
+			<div class="d-flex flex-column">
+				<label>Start -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="@NewTimeLog.Start"></InputDate>
+			</div>
+			<div class="d-flex flex-column">
+				<label>End -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="@NewTimeLog.End"></InputDate>
+			</div>
+			<div class="d-flex flex-column">
+				<label>Task Id</label>
+				<InputNumber class="form-control" @bind-Value="@NewTimeLog.TaskCode"></InputNumber>
+			</div>
+			<div>
+				<label>@errorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="SaveTimeLog">@EditOrCreate</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
 
 @code
 {
@@ -75,6 +110,13 @@
 		UserDetails.Id = await GetUserId();
 		UserDetails.UserName = await GetUserName();
 
+		LoadData();
+
+		base.OnInitialized();
+	}
+
+	private async void LoadData()
+	{
 		//Loads User and time log data
 		try
 		{
@@ -84,15 +126,10 @@
 		catch
 		{
 		}
-
-		base.OnInitialized();
-
-		StateHasChanged();
 	}
 
 	private void FilterTimeLogs()
 	{
-		Console.WriteLine($"Filter By - {FilterBy}");
 		if (FilterBy == "none")
 		{
 			CurrentTimeLogs = TimeLogs;
@@ -116,5 +153,68 @@
 		}
 
 		StateHasChanged();
+	}
+
+	private Modal modal;
+	private string errorMessage;
+	private string EditOrCreate;
+	private TimeLog NewTimeLog = new TimeLog();
+
+	private void CreateModal()
+	{
+		NewTimeLog = new TimeLog();
+		NewTimeLog.Start = DateTime.Now;
+		NewTimeLog.End = DateTime.Now;
+
+		EditOrCreate = "Create";
+		errorMessage = "";
+
+		modal.Open();
+	}
+
+	private void EditModal(TimeLog TimeLog)
+	{
+		NewTimeLog = new TimeLog(TimeLog);
+		EditOrCreate = "Edit";
+		errorMessage = "";
+
+		modal.Open();
+	}
+
+	private async void SaveTimeLog()
+	{
+		ApiResponse? success = null;
+
+		//TODO - Send new time log to API
+		if (EditOrCreate == "Create")
+		{
+			NewTimeLog.UserCode = UserDetails.Id;
+
+			HttpResponseMessage response = await httpClient.PostAsJsonAsync<TimeLog>("/api/LogTime/CreateTimeLog", NewTimeLog);
+			success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		}
+		else if (EditOrCreate == "Edit")
+		{
+			NewTimeLog.UserCode = UserDetails.Id;
+
+			HttpResponseMessage response = await httpClient.PostAsJsonAsync<TimeLog>("/api/LogTime/UpdateTimeLog", NewTimeLog);
+			success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+		}
+
+		if (success is null)
+		{
+			errorMessage = "Something went wrong. Please try again later!";
+			return;
+		}
+		else if (success.Success == false)
+		{
+			errorMessage = success.Message;
+			return;
+		}
+
+		//Loads data for time logs
+		modal.Close();
+		LoadData();
 	}
 }
