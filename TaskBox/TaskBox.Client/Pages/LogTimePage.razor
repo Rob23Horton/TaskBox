@@ -9,25 +9,50 @@
 
 <div>
 	<h1>@UserDetails.UserName</h1>
-	<div>
+	<div class="d-grid bttm-margin">
+		<div class="d-flex flex-column filter-container">
+			<label>Order By</label>
+
+			<InputSelect class="form-select" @bind-Value="@OrderBy" @bind-Value:after="FilterTimeLogs">
+				<option value="des">Newest</option>
+				<option value="asc">Oldest</option>
+				<option value="len">Length</option>
+			</InputSelect>
+		</div>
+		<div class="d-flex flex-column filter-task-container">
+			<label>Filter by Task</label>
+			<InputSelect class="form-select" @bind-Value="FilterBy" @bind-Value:after="FilterTimeLogs">
+				<option value="none">None</option>
+				@foreach (TimeLog timeLog in TimeLogs.DistinctBy(t => t.TaskCode).ToList())
+				{
+					<option value="@timeLog.TaskCode">@timeLog.TaskName</option>
+				}
+			</InputSelect>
+		</div>
+		<div class="create-log-container">
+			<button type="button" >Create Time Log</button>
+		</div>
+	</div>
+	<div class="bttm-margin">
 		<table class="w-100">
 			<tr>
 				<th>Name</th>
 				<th>Description</th>
 				<th>Start</th>
-				<th>Length<br />(Minutes)</th>
+				<th>Length</th>
 				<th>End</th>
 				<th>Task</th>
 				<th>Edit</th>
 			</tr>
-			@foreach (TimeLog timeLog in TimeLogs)
+			@foreach (TimeLog timeLog in CurrentTimeLogs)
 			{
 				<tr>
 					<td>@timeLog.Name</td>
 					<td>@(timeLog.Description.Length > 40? timeLog.Description.Substring(0, 40): timeLog.Description)</td>
-					<td>@timeLog.Start.TimeOfDay.ToString()</td>
-					<td>@((timeLog.End - timeLog.Start).Minutes)</td>
-					<td>@timeLog.End.TimeOfDay.ToString()</td>
+					<td>@timeLog.Start.ToShortDateString() @timeLog.Start.ToShortTimeString()</td>
+					@{TimeSpan difference = timeLog.End - timeLog.Start;}
+					<td>@(difference.Hours) Hours @(difference.Minutes) Mins</td>
+					<td>@timeLog.End.ToShortTimeString()</td>
 					<td><a href="/task-page/@timeLog.TaskCode">@timeLog.TaskName</a></td>
 					<td><button type="button" >Edit</button></td>
 				</tr>
@@ -40,6 +65,10 @@
 {
 	private User UserDetails { get; set; } = new User();
 	private List<TimeLog> TimeLogs { get; set; } = new List<TimeLog>();
+	private List<TimeLog> CurrentTimeLogs { get; set; } = new List<TimeLog>();
+
+	private string OrderBy = "des";
+	private string FilterBy = "none";
 
 	protected override async void OnInitialized()
 	{
@@ -50,12 +79,41 @@
 		try
 		{
 			TimeLogs = await httpClient.GetFromJsonAsync<List<TimeLog>>($"/api/LogTime/GetTimeLogs?UserId={UserDetails.Id}");
+			FilterTimeLogs();
 		}
 		catch
 		{
 		}
 
 		base.OnInitialized();
+
+		StateHasChanged();
+	}
+
+	private void FilterTimeLogs()
+	{
+		Console.WriteLine($"Filter By - {FilterBy}");
+		if (FilterBy == "none")
+		{
+			CurrentTimeLogs = TimeLogs;
+		}
+		else
+		{
+			CurrentTimeLogs = TimeLogs.Where(t => t.TaskCode.ToString() == FilterBy).ToList();
+		}
+
+		if (OrderBy == "asc")
+		{
+			CurrentTimeLogs = CurrentTimeLogs.OrderBy(t => t.Start).ToList();
+		}
+		else if (OrderBy == "des")
+		{
+			CurrentTimeLogs = CurrentTimeLogs.OrderByDescending(t => t.Start).ToList();
+		}
+		else if (OrderBy == "len")
+		{
+			CurrentTimeLogs = CurrentTimeLogs.OrderByDescending(t => (t.End - t.Start)).ToList();
+		}
 
 		StateHasChanged();
 	}
