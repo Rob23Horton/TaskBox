@@ -39,6 +39,7 @@ namespace TaskBox.Repositories
 				ProjectUserPermission permission = new ProjectUserPermission();
 				permission.UserCode = UserId;
 				permission.Permission = "N";
+				return permission;
 			}
 
 			return permissions[0];
