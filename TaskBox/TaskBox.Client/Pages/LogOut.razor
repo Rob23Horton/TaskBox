@@ -21,7 +21,7 @@
 	private async void PreformLogOut()
 	{
 		//Logs out through api request
-		await httpClient.GetAsync("http://localhost:5036/api/User/LogOut");
+		await httpClient.GetAsync("/api/User/LogOut");
 
 		//Dirty trick to make the cache update for pages
 		navManager.NavigateTo("/", forceLoad: true);
