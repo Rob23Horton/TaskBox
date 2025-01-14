@@ -97,5 +97,24 @@ namespace TaskBox.Repositories
 
 			return project[0];
 		}
+
+		public List<Project> GetUserProjects(int UserId)
+		{
+			SelectRequest projectRequest = new SelectRequest("tblProject");
+			projectRequest.AddData("tblProject", "ProjectId", "Id");
+			projectRequest.AddData("tblProject", "Name");
+			projectRequest.AddData("tblProject", "Start");
+			projectRequest.AddData("tblProject", "Due");
+			projectRequest.AddData("tblNote", "Description");
+
+			projectRequest.AddJoin("tblProject", "NoteCode", "tblNote", "NoteId");
+			projectRequest.AddJoin("tblProject", "ProjectId", "tblProjectUser", "ProjectCode");
+
+			projectRequest.AddWhere("tblProjectUser", "UserCode", UserId);
+
+			List<Project> projects = _databaseConnection.Select<Project>(projectRequest);
+
+			return projects;
+		}
 	}
 }

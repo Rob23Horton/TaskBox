@@ -45,5 +45,20 @@ namespace TaskBox.Controllers
 			}
 
 		}
+
+		[HttpGet("GetUserProjects")]
+		[ProducesResponseType(200, Type = typeof(List<Project>))]
+		[ProducesResponseType(400)]
+		public IActionResult GetProjectsFromUser(int UserId)
+		{
+			try
+			{
+				return Ok(_projectRepository.GetUserProjects(UserId));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
 	}
 }

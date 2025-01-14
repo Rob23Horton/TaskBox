@@ -1,20 +1,65 @@
 ﻿@page "/"
+@using System.Security.Claims;
+
+@inject AuthenticationStateProvider authenticationStateProvider;
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<AuthorizeView>
+	<Authorized>
+		<h1>Hello, @UserDetails.UserName</h1>
+		<div class="d-flex flex-column">
+			@foreach (Project project in Projects)
+			{
+				<div class="form-control">
+					<a href="/project-page/@project.Id">@project.Name</a>
+				</div>
+			}
+		</div>
+	</Authorized>
+	<NotAuthorized>
+		Please log in to continue.
+		<a href="/login">Log In</a>
+	</NotAuthorized>
+</AuthorizeView>
 
-Welcome to your new app.
+@code
+{
+	private User UserDetails { get; set; } = new User();
+	private List<Project> Projects { get; set; } = new List<Project>();
 
-<span>Test Project Page = <a href="/project-page/3">Test Project</a></span>
+	protected override async void OnInitialized()
+	{
+		AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+		Claim? userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Sid).FirstOrDefault();
 
-<div>
-	<ToolTip>
-		<Tip>
-			<div class='d-flex flex-column'><label>Hello</label><label>Hi</label></div>
-		</Tip>
-		<Content>
-			Tooltip with HTML
-		</Content>
-	</ToolTip>
-</div>
+		if (userIdClaim is not null || userIdClaim != default)
+		{
+			UserDetails.Id = int.Parse(userIdClaim.Value);
+
+			Claim? userNameClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Name).FirstOrDefault();
+			UserDetails.UserName = userNameClaim.Value;
+
+			LoadUserProjects();
+		}
+
+		base.OnInitialized();
+	}
+
+	private async void LoadUserProjects()
+	{
+		try
+		{
+			Projects = await httpClient.GetFromJsonAsync<List<Project>>($"/api/Project/GetUserProjects?UserId={UserDetails.Id}");
+
+		}
+		catch
+		{
+
+		}
+
+		StateHasChanged();
+	}
+}
