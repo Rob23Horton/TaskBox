@@ -39,4 +39,17 @@
 		navManager.NavigateTo("/access-denied");
 		return -1;
 	}
+
+	public async Task<string> GetUserName()
+	{
+		//Gets the User Id from the authenticationStateProvider
+		AuthenticationState authenticationState = await authenticationStateProvider.GetAuthenticationStateAsync();
+		Claim? userIdClaim = authenticationState.User.Claims.Where(c => c.Type == ClaimTypes.Name).FirstOrDefault();
+		if (userIdClaim is null || userIdClaim == default)
+		{
+			return "";
+		}
+
+		return userIdClaim.Value.ToString();
+	}
 }

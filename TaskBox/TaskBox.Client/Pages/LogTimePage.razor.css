@@ -1,0 +1,26 @@
+﻿
+.bttm-margin {
+    margin-bottom: 1vh;
+}
+
+th, td{
+    border: 1px solid black;
+}
+
+.filter-container{
+    grid-column: 1;
+}
+
+.filter-task-container {
+    grid-column: 2;
+    justify-self: center;
+}
+
+.create-log-container{
+    grid-column: 3;
+    justify-self: right;
+}
+
+.create-log-container > button{
+    height: 100%;
+}

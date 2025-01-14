@@ -73,7 +73,7 @@ namespace TaskBox.Controllers
 		{
 			try
 			{
-				return Ok(true);
+				return Ok(_segmentRepository.UserSegmentPermission(SegmentId, UserId).Permission.ToUpper() == "N"? false : true);
 			}
 			catch
 			{
