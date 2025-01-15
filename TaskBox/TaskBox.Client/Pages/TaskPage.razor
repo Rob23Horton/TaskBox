@@ -21,7 +21,7 @@
 			</span>
 		</div>
 		<div class="log-time-container">
-			<button type="button" @onclick="GoToLogTimePage">Log Time</button>
+			<button type="button" @onclick="OpenTimeLog">Log Time</button>
 		</div>
 	</div>
 	<div class="d-grid bttm-margin">
@@ -71,6 +71,37 @@
 		<div>
 			<button type="button" class="btn btn-success" @onclick="SaveCheckbox">Save</button>
 			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
+
+<Modal @ref="timeLogModal">
+	<Title>Create Time Log</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div>
+				<InputText class="form-control" placeholder="Time Log Name (Max 24 chars)" maxlength="24" @bind-Value="@NewTimeLog.Name" />
+			</div>
+			<div>
+				<InputTextArea class="form-control" placeholder="Description" @bind-Value="@NewTimeLog.Description" />
+			</div>
+			<div class="d-flex flex-column">
+				<label>Start -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="@NewTimeLog.Start"></InputDate>
+			</div>
+			<div class="d-flex flex-column">
+				<label>End -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="@NewTimeLog.End"></InputDate>
+			</div>
+			<div>
+				<label>@timeLogErrorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="CreateTimeLog">Create</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => {NewTimeLog = new TimeLog();timeLogModal.Close();}">Cancel</button>
 		</div>
 	</Footer>
 </Modal>
@@ -135,11 +166,6 @@
 		}
 	}
 
-	private void GoToLogTimePage()
-	{
-		navManager.NavigateTo($"/log-time-page");
-	}
-
 	private Modal modal;
 	private Checkbox CurrentCheckbox = new Checkbox();
 	private string EditOrCreate = "Edit";
@@ -200,5 +226,50 @@
 		modal.Close();
 		LoadData();
 		StateHasChanged();
+	}
+
+	private Modal timeLogModal;
+	private string timeLogErrorMessage;
+	private TimeLog NewTimeLog = new TimeLog();
+
+	private void OpenTimeLog()
+	{
+		NewTimeLog.Start = DateTime.Now;
+		NewTimeLog.End = DateTime.Now;
+		timeLogModal.Open();
+	}
+
+	private async void CreateTimeLog()
+	{
+		NewTimeLog.TaskCode = Id;
+		NewTimeLog.UserCode = UserId;
+
+		if (string.IsNullOrWhiteSpace(NewTimeLog.Name))
+		{
+			timeLogErrorMessage = "Name cannot be blank!";
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(NewTimeLog.Name))
+		{
+			timeLogErrorMessage = "Description cannot be blank!";
+			return;
+		}
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<TimeLog>("/api/LogTime/CreateTimeLog", NewTimeLog);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			errorMessage = "Something went wrong. Please try again later!";
+			return;
+		}
+		else if (success.Success == false)
+		{
+			errorMessage = success.Message;
+			return;
+		}
+
+		NewTimeLog = new TimeLog();
+		timeLogModal.Close();
 	}
 }
