@@ -114,10 +114,10 @@
 			return;
 		}
 
-		base.OnInitialized();
-
 		//Loads data to gantt chart
 		LoadData();
+
+		base.OnInitialized();
 	}
 
 	private async void LoadData()
@@ -222,7 +222,10 @@
 			return;
 		}
 
-		navManager.Refresh(forceReload: true);
+		modal.Close();
+
+		//Loads data
+		LoadData();
 	}
 
 

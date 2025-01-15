@@ -161,21 +161,33 @@
 			return;
 		}
 
-		//Gets the Segment details from API
-		Segment? segment = await httpClient.GetFromJsonAsync<Segment>($"/api/Segment/GetSegment?SegmentId={SegmentId}");
-		if (segment is null)
-		{
-			navManager.NavigateTo("/access-denied");
-			return;
-		}
-		SegmentDetails = segment;
-
-		//Gets all bugs for segment
-		Bugs = await httpClient.GetFromJsonAsync<List<Bug>>($"/api/Bug/GetBugs?SegmentId={SegmentId}");
+		LoadBugs();
 
 		base.OnInitialized();
+	}
 
-		UpdateBugsList();
+	private async void LoadBugs()
+	{
+		try
+		{
+			//Gets the Segment details from API
+			Segment? segment = await httpClient.GetFromJsonAsync<Segment>($"/api/Segment/GetSegment?SegmentId={SegmentId}");
+			if (segment is null)
+			{
+				navManager.NavigateTo("/access-denied");
+				return;
+			}
+			SegmentDetails = segment;
+
+			//Gets all bugs for segment
+			Bugs = await httpClient.GetFromJsonAsync<List<Bug>>($"/api/Bug/GetBugs?SegmentId={SegmentId}");
+
+			UpdateBugsList();
+		}
+		catch
+		{
+
+		}
 	}
 
 
@@ -252,10 +264,7 @@
 		}
 
 		createModal.Close();
-		NewBugDetails = new Bug();
-
-		Bugs.Add(new Bug(newBug.Bug));
-		UpdateBugsList();
+		LoadBugs();
 	}
 
 	private Modal editModal;
@@ -301,13 +310,6 @@
 		}
 
 		editModal.Close();
-
-		//Updates bug list and visuals
-		Bug editedBug = Bugs.Where(b => b.Id == CurrentBug.Id).First();
-		editedBug.Name = CurrentBug.Name;
-		editedBug.Description = CurrentBug.Description;
-		editedBug.Completed = CurrentBug.Completed;
-
-		UpdateBugsList();
+		LoadBugs();
 	}
 }
