@@ -104,9 +104,28 @@ namespace DatabaseConnection.Services
 						case Functions.Average:
 							currentQuery += "AVG(";
 							break;
+
+						case Functions.TimeDiff:
+
+							currentQuery += $"TIMEDIFF({currData.Table}.{currData.ValueName}, ";
+							currData = subQuery.Select.Data[1];
+
+							break;
 					}
 
-					currentQuery += $"{currData.Table}.{currData.ValueName}) FROM {subQuery.Select.Table} WHERE ";
+					currentQuery += $"{currData.Table}.{currData.ValueName}) ";
+					if (subQuery.Select.Table != request.Table)
+					{
+						currentQuery += $"FROM { subQuery.Select.Table} ";
+					}
+
+					//Joins
+					foreach (RequestJoin join in subQuery.Select.Joins)
+					{
+						currentQuery += $"INNER JOIN {join.ConnectorTable} ON {join.OriginTable}.{join.OriginValue} = {join.ConnectorTable}.{join.ConnectorValue} ";
+					}
+
+					currentQuery += "WHERE ";
 
 					foreach (RequestWhere where in subQuery.Select.WhereData)
 					{
@@ -126,7 +145,11 @@ namespace DatabaseConnection.Services
 						}
 						else if (where.Value is DateTime dateVal)
 						{
-							currentQuery += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+							currentQuery += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}' AND ";
+						}
+						else if (where.Value is AnotherTableValue anthTblVal)
+						{
+							currentQuery += $"{anthTblVal.Table}.{anthTblVal.ValueName} AND ";
 						}
 					}
 					currentQuery = currentQuery.Substring(0, currentQuery.Length - 5);
@@ -171,13 +194,19 @@ namespace DatabaseConnection.Services
 					}
 					else if (where.Value is DateTime dateVal)
 					{
-						query += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}', ";
+						query += $"'{dateVal.ToString("yyyy-MM-dd HH:mm:ss")}' AND ";
+					}
+					else if (where.Value is AnotherTableValue anthTblVal)
+					{
+						query += $"{anthTblVal.Table}.{anthTblVal.ValueName} AND ";
 					}
 				}
 
 				query = query.Substring(0, query.Length - 5);
 			}
 			query += ";";
+
+			Console.WriteLine($"SELECT - {query}");
 
 			MySqlCommand cmd = new MySqlCommand(query, _connection);
 			MySqlDataReader dataReader = cmd.ExecuteReader();

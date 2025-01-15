@@ -1,6 +1,7 @@
 ﻿using DatabaseConnection.Models;
 using DatabaseConnection.Services;
 using System.Security;
+using System.Threading.Tasks;
 using TaskBox.Interfaces;
 using TaskBox.Shared.Models;
 
@@ -86,6 +87,31 @@ namespace TaskBox.Repositories
 			return response;
 		}
 
+		private List<TaskBoxTask> GetDurationForTasks(List<TaskBoxTask> Tasks)
+		{
+			foreach (TaskBoxTask task in Tasks)
+			{
+				SelectRequest selectTaskDuration = new SelectRequest("tblTimeLog");
+				selectTaskDuration.AddData("tblTimeLog", "TimeLogId", "ObjectId");
+
+				SelectRequest selectDuration = new SelectRequest("tblTimeLog");
+				selectDuration.AddData("End");
+				selectDuration.AddData("Start");
+				selectTaskDuration.AddData(Functions.TimeDiff, selectDuration, "Duration");
+
+				selectTaskDuration.AddWhere("TaskCode", task.Id);
+
+				List<ItemDuration> durations = _databaseConnection.Select<ItemDuration>(selectTaskDuration);
+
+				TimeSpan total = new TimeSpan(0);
+				durations.ForEach(d => total += d.Duration);
+
+				task.Duration = total;
+			}
+
+			return Tasks;
+		}
+
 		public TaskBoxTask GetTask(int TaskId)
 		{
 			SelectRequest taskRequest = new SelectRequest("tblTask");
@@ -107,6 +133,8 @@ namespace TaskBox.Repositories
 			taskRequest.AddWhere("tblTask", "TaskId", TaskId);
 
 			List<TaskBoxTask> task = _databaseConnection.Select<TaskBoxTask>(taskRequest);
+
+			task = GetDurationForTasks(task);
 
 			return task[0];
 		}
@@ -134,6 +162,8 @@ namespace TaskBox.Repositories
 				{
 					return new List<TaskBoxTask>();
 				}
+
+				tasks = GetDurationForTasks(tasks);
 
 				return tasks;
 			}

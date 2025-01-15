@@ -75,6 +75,32 @@ namespace TaskBox.Repositories
 			}
 		}
 
+		private List<Project> GetDurationForProjects(List<Project> Projects)
+		{
+			foreach (Project project in Projects)
+			{
+				SelectRequest selectProjectDuration = new SelectRequest("tblTimeLog");
+				selectProjectDuration.AddData("tblTimeLog", "TimeLogId", "ObjectId");
+
+				SelectRequest selectDuration = new SelectRequest("tblTimeLog");
+				selectDuration.AddData("End");
+				selectDuration.AddData("Start");
+				selectProjectDuration.AddData(Functions.TimeDiff, selectDuration, "Duration");
+
+				selectProjectDuration.AddJoin("tblTimeLog", "TaskCode", "tblTask", "TaskId");
+				selectProjectDuration.AddJoin("tblTask", "SegmentCode", "tblSegment", "SegmentId");
+				selectProjectDuration.AddWhere("tblSegment", "ProjectCode", project.Id);
+
+				List<ItemDuration> durations = _databaseConnection.Select<ItemDuration>(selectProjectDuration);
+
+				TimeSpan total = new TimeSpan(0);
+				durations.ForEach(d => total += d.Duration);
+
+				project.Duration = total;
+			}
+
+			return Projects;
+		}
 		public Project GetProject(int ProjectId)
 		{
 			SelectRequest projectRequest = new SelectRequest("tblProject");
@@ -95,6 +121,8 @@ namespace TaskBox.Repositories
 				throw new Exception();
 			}
 
+			project = GetDurationForProjects(project);
+
 			return project[0];
 		}
 
@@ -113,6 +141,8 @@ namespace TaskBox.Repositories
 			projectRequest.AddWhere("tblProjectUser", "UserCode", UserId);
 
 			List<Project> projects = _databaseConnection.Select<Project>(projectRequest);
+
+			projects = GetDurationForProjects(projects);
 
 			return projects;
 		}

@@ -10,6 +10,7 @@ namespace DatabaseConnection.Models
 	{
 		Count,
 		Average,
-		Sum
+		Sum,
+		TimeDiff
 	}
 }

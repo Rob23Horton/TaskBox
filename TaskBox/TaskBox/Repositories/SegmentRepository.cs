@@ -68,11 +68,11 @@ namespace TaskBox.Repositories
 			segmentsRequest.AddData("tblSegment", "Due");
 			segmentsRequest.AddData("tblNote", "Description");
 
+			//Adds bugs number
 			SelectRequest bugRequest = new SelectRequest("tblBug");
 			bugRequest.AddData("BugId");
 			bugRequest.AddWhere("SegmentCode", SegmentId);
 			bugRequest.AddWhere("Completed", false);
-
 			segmentsRequest.AddData(Functions.Count, bugRequest, "BugNumber");
 
 			segmentsRequest.AddJoin("tblSegment", "NoteCode", "tblNote", "NoteId");
@@ -82,7 +82,36 @@ namespace TaskBox.Repositories
 
 			List<Segment> segment = _databaseConnection.Select<Segment>(segmentsRequest);
 
+			//Gets all durations for segment
+			segment = GetDurationForSegments(segment);
+
 			return segment[0];
+		}
+
+		private List<Segment> GetDurationForSegments(List<Segment> Segments)
+		{
+			foreach (Segment segment in Segments)
+			{
+				SelectRequest selectSegmentDuration = new SelectRequest("tblTimeLog");
+				selectSegmentDuration.AddData("tblTimeLog", "TimeLogId", "ObjectId");
+
+				SelectRequest selectDuration = new SelectRequest("tblTimeLog");
+				selectDuration.AddData("End");
+				selectDuration.AddData("Start");
+				selectSegmentDuration.AddData(Functions.TimeDiff, selectDuration, "Duration");
+
+				selectSegmentDuration.AddJoin("tblTimeLog", "TaskCode", "tblTask", "TaskId");
+				selectSegmentDuration.AddWhere("tblTask", "SegmentCode", segment.Id);
+
+				List<ItemDuration> durations = _databaseConnection.Select<ItemDuration>(selectSegmentDuration);
+
+				TimeSpan total = new TimeSpan(0);
+				durations.ForEach(d => total += d.Duration);
+
+				segment.Duration = total;
+			}
+
+			return Segments;
 		}
 
 		public List<Segment> GetSegmentsFromProjectId(int ProjectId)
@@ -103,6 +132,9 @@ namespace TaskBox.Repositories
 				segmentsRequest.AddWhere("tblSegment", "ProjectCode", ProjectId);
 
 				List<Segment> segments = _databaseConnection.Select<Segment>(segmentsRequest);
+
+				//Gets all durations for segments
+				segments = GetDurationForSegments(segments);
 
 				return segments;
 			}
