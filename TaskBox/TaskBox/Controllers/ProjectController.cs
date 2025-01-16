@@ -15,8 +15,8 @@ namespace TaskBox.Controllers
 		}
 
 		[HttpGet("CheckPermission")]
-		[ProducesResponseType(200, Type=typeof(bool))]
-		[ProducesResponseType(400, Type=typeof(bool))]
+		[ProducesResponseType(200, Type = typeof(bool))]
+		[ProducesResponseType(400, Type = typeof(bool))]
 		public IActionResult CheckUserPermission(int UserId, int ProjectId)
 		{
 			try
@@ -31,7 +31,7 @@ namespace TaskBox.Controllers
 
 
 		[HttpGet("GetProject")]
-		[ProducesResponseType(200, Type=typeof(Project))]
+		[ProducesResponseType(200, Type = typeof(Project))]
 		[ProducesResponseType(400)]
 		public IActionResult GetProjectDetails(int ProjectId)
 		{
@@ -54,6 +54,21 @@ namespace TaskBox.Controllers
 			try
 			{
 				return Ok(_projectRepository.GetUserProjects(UserId));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
+		[HttpPost("CreateProject")]
+		[ProducesResponseType(200, Type=typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult CreateProject(ProjectAndUser projectAndUser)
+		{
+			try
+			{
+				return Ok(_projectRepository.CreateProject(projectAndUser.UserId, projectAndUser.Project));
 			}
 			catch
 			{

@@ -146,5 +146,54 @@ namespace TaskBox.Repositories
 
 			return projects;
 		}
+
+		public ApiResponse CreateProject(int UserId, Project Project)
+		{
+			ApiResponse response = new ApiResponse();
+
+			//Inserts Note
+			Note note = new Note(Project.Description);
+			InsertRequest noteInsert = new InsertRequest("tblNote");
+
+			_databaseConnection.Insert<Note>(noteInsert, note);
+
+			//Gets Note Id
+			SelectRequest noteSelect = new SelectRequest("tblNote");
+			noteSelect.AddData("tblNote", "NoteId", "Id");
+			noteSelect.AddWhere("Description", note.Description);
+
+			int noteCode = _databaseConnection.Select<Note>(noteSelect)[0].Id;
+
+			//Inserts Project
+			InsertRequest projectInsert = new InsertRequest("tblProject");
+			projectInsert.AddData("Name", Project.Name);
+			projectInsert.AddData("Start", Project.Start);
+			projectInsert.AddData("Due", Project.Due);
+			projectInsert.AddData("NoteCode", noteCode);
+
+			_databaseConnection.Insert(projectInsert);
+
+			//Gets Project Id
+			SelectRequest projectRequest = new SelectRequest("tblProject");
+			projectRequest.AddData("tblProject", "ProjectId", "Id");
+			projectRequest.AddWhere("tblProject", "Name", Project.Name);
+			projectRequest.AddWhere("tblProject", "Start", Project.Start);
+			projectRequest.AddWhere("tblProject", "Due", Project.Due);
+
+			List<Project> project = _databaseConnection.Select<Project>(projectRequest);
+
+			int projectId = project[0].Id;
+
+			//Inserts Project Permission
+			InsertRequest permissionInsert = new InsertRequest("tblProjectUser");
+			permissionInsert.AddData("UserCode", UserId);
+			permissionInsert.AddData("ProjectCode", projectId);
+			permissionInsert.AddData("Permission", "A");
+
+			_databaseConnection.Insert(permissionInsert);
+
+			response.Success = true;
+			return response;
+		}
 	}
 }

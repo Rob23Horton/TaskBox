@@ -151,6 +151,8 @@
 	private int Length { get; set; }
 	private int CurrentPage { get; set; } = 0;
 
+	private bool firstRender = true;
+
 	protected override bool ShouldRender()
 	{
 		if (Items.Count() > 0)
@@ -161,6 +163,12 @@
 			currentStart = new DateTime(currentStart.Year, currentStart.Month, 1);
 
 			Length = DateTime.DaysInMonth(currentStart.Year, currentStart.Month);
+
+			if (firstRender)
+			{
+				firstRender = false;
+				GoToToday();
+			}
 		}
 
 		return base.ShouldRender();
@@ -200,12 +208,11 @@
 	}
 
 
-	private void GoToToday()
+	public void GoToToday()
 	{
 		int monthDifference = ((FirstStart.Year - DateTime.Today.Year) * 12) + FirstStart.Month - DateTime.Today.Month;
 
 		CurrentPage = -monthDifference;
-		StateHasChanged();
 	}
 
 }

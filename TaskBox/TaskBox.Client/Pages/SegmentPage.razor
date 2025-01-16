@@ -176,37 +176,31 @@
 		if (string.IsNullOrWhiteSpace(NewTaskDetails.Name))
 		{
 			errorMessage = "Name cannot be blank!";
-			StateHasChanged();
 			return;
 		}
 		else if (string.IsNullOrWhiteSpace(NewTaskDetails.Description))
 		{
 			errorMessage = "Description cannot be blank!";
-			StateHasChanged();
 			return;
 		}
 		else if (NewTaskDetails.Start > NewTaskDetails.Due)
 		{
 			errorMessage = "Due date cannot be before start date!";
-			StateHasChanged();
 			return;
 		}
 		else if (NewTaskDetails.Start < DateTime.Now.AddYears(-1))
 		{
 			errorMessage = "Start date cannot be more than a year ago!";
-			StateHasChanged();
 			return;
 		}
 		else if (NewTaskDetails.Start < SegmentDetails.Start)
 		{
 			errorMessage = "Start date cannot be before segment start date!";
-			StateHasChanged();
 			return;
 		}
 		else if (NewTaskDetails.Due > SegmentDetails.Due)
 		{
 			errorMessage = "Due date cannot be after segment due date!";
-			StateHasChanged();
 			return;
 		}
 
@@ -218,13 +212,11 @@
 		if (success is null)
 		{
 			errorMessage = "Something went wrong";
-			StateHasChanged();
 			return;
 		}
 		else if (success.Success == false)
 		{
 			errorMessage = success.Message;
-			StateHasChanged();
 			return;
 		}
 
