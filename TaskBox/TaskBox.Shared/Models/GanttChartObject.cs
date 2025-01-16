@@ -14,13 +14,14 @@ namespace TaskBox.Shared.Models
 			this.Description = string.Empty;
 		}
 
-		public GanttChartObject(int Id, string Name, string Description, DateTime Start, DateTime Due)
+		public GanttChartObject(int Id, string Name, string Description, DateTime Start, DateTime Due, TimeSpan Duration)
 		{
 			this.Id = Id;
 			this.Name = Name;
 			this.Description = Description;
 			this.Start = Start;
 			this.Due = Due;
+			this.Duration = Duration;
 		}
 
 		public GanttChartObject(object objectItem)
@@ -31,7 +32,8 @@ namespace TaskBox.Shared.Models
 				this.Name = ganttObject.Name;
 				this.Description = ganttObject.Description;
 				this.Start = ganttObject.Start;
-				this.Due= ganttObject.Due;
+				this.Due = ganttObject.Due;
+				this.Duration = ganttObject.Duration;
 			}
 			else
 			{
@@ -45,5 +47,6 @@ namespace TaskBox.Shared.Models
 		public string Description { get; set; }
 		public DateTime Start { get; set; }
 		public DateTime Due { get; set; }
+		public TimeSpan Duration { get; set; }
 	}
 }

@@ -115,6 +115,7 @@
 											<label>Description - @(item.Description.Length > 20 ? item.Description.Substring(0, 20) : item.Description)</label>
 											<label>Start Date - @item.Start.ToLongDateString() @item.Start.ToShortTimeString()</label>
 											<label>Due Date - @item.Due.ToLongDateString() @item.Due.ToShortTimeString()</label>
+											<label>Duration - @item.Duration.Hours Hours @item.Duration.Minutes Mins</label>
 										</div>
 									</Tip>
 									<Content>
