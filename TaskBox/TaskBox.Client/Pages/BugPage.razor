@@ -23,7 +23,7 @@
 	<div class="d-grid  bttm-margin">
 		<div class="bug-label-container">
 			@*Drop down list for ordering*@
-			<InputSelect @bind-Value="@Order" @bind-Value:after="UpdateBugsList">
+			<InputSelect class="form-select" @bind-Value="@Order" @bind-Value:after="UpdateBugsList">
 				<option value="Asc">Oldest</option>
 				<option value="Des">Newest</option>
 				<option value="Name">By Name</option>
