@@ -48,7 +48,7 @@
 			{
 				<tr>
 					<td>@timeLog.Name</td>
-					<td>@(timeLog.Description.Length > 40? timeLog.Description.Substring(0, 40): timeLog.Description)</td>
+					<td>@(timeLog.Description.Length > 40? timeLog.Description.Substring(0, 40) + "...": timeLog.Description)</td>
 					<td>@timeLog.Start.ToShortDateString() @timeLog.Start.ToShortTimeString()</td>
 					@{TimeSpan difference = timeLog.End - timeLog.Start;}
 					<td>@(difference.Hours) Hours @(difference.Minutes) Mins</td>

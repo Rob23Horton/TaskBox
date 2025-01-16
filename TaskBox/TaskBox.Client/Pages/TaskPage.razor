@@ -249,7 +249,7 @@
 			timeLogErrorMessage = "Name cannot be blank!";
 			return;
 		}
-		else if (string.IsNullOrWhiteSpace(NewTimeLog.Name))
+		else if (string.IsNullOrWhiteSpace(NewTimeLog.Description))
 		{
 			timeLogErrorMessage = "Description cannot be blank!";
 			return;
@@ -271,5 +271,6 @@
 
 		NewTimeLog = new TimeLog();
 		timeLogModal.Close();
+		StateHasChanged();
 	}
 }
