@@ -10,14 +10,83 @@
 <AuthorizeView>
 	<Authorized>
 		<h1>Hello, @UserDetails.UserName</h1>
-		<div class="d-flex flex-column">
-			@foreach (Project project in Projects)
-			{
-				<div class="form-control">
-					<a href="/project-page/@project.Id">@project.Name</a>
+		<div>
+			<div class="d-grid bttm-margin">
+				<div class="project-label-container">
+					<label>Your Projects - </label>
 				</div>
-			}
+				<div class="create-project-container">
+					<button type="button" @onclick="OpenNewProject">Create Project</button>
+				</div>
+			</div>
+			<div class="bttm-margin">
+				<InputSelect class="form-select" @bind-Value="@DisplayType" @bind-Value:after="StateHasChanged">
+					<option value="gantt">Gantt Chart</option>
+					<option value="table">Table</option>
+				</InputSelect>
+			</div>
+			<div class="@((MarkupString)(DisplayType != "table"? "hidden" : ""))">
+				<table class="w-100">
+					<tr>
+						<th>Name</th>
+						<th>Description</th>
+						<th>Start</th>
+						<th>Current Length</th>
+						<th>End</th>
+					</tr>
+					@foreach (Project project in Projects)
+					{
+						<tr>
+							<td><a href="/project-page/@project.Id">@project.Name</a></td>
+							<td>@(project.Description.Length > 120 ? project.Description.Substring(0, 120) + "..." : project.Description)</td>
+							<td>@project.Start.ToShortDateString() @project.Start.ToShortTimeString()</td>
+							<td>@project.Duration.Hours Hours @project.Duration.Minutes Mins</td>
+							<td>@project.Due.ToShortDateString() @project.Due.ToShortTimeString()</td>
+						</tr>
+					}
+				</table>
+			</div>
+			<div class="@((MarkupString)(DisplayType != "gantt"? "hidden" : ""))">
+				<GanttChart
+				ClickUrl="/project-page/"
+				Frequency="1"
+				Items="@GanttChartObjects"
+				></GanttChart>
+			</div>
 		</div>
+
+		<Modal @ref="modal">
+			<Title>Create Segment</Title>
+			<Body>
+				<div class="d-flex flex-column">
+					<div class="w-100">
+						<InputText class="w-100" placeholder="Segment Name (Max 24 chars)" maxlength="24" @bind-Value="@NewProjectDetails.Name" />
+					</div>
+					<div class="w-100">
+						<InputTextArea class="w-100" placeholder="Description" @bind-Value="@NewProjectDetails.Description" />
+					</div>
+					<div class="form-control d-flex flex-column">
+						<label>Start Date -</label>
+						<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@NewProjectDetails.Start"></InputDate>
+					</div>
+					<div class="form-control d-flex flex-column">
+						<label>Due Date -</label>
+						<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@NewProjectDetails.Due"></InputDate>
+					</div>
+					<div>
+						<label>@errorMessage</label>
+					</div>
+				</div>
+			</Body>
+			<Footer>
+				<div>
+					<button type="button" class="btn btn-success" @onclick="AddProject">Create</button>
+					<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => {NewProjectDetails=new Project();modal.Close();}">Cancel</button>
+				</div>
+			</Footer>
+		</Modal>
+
+
 	</Authorized>
 	<NotAuthorized>
 		Please log in to continue.
@@ -25,10 +94,15 @@
 	</NotAuthorized>
 </AuthorizeView>
 
+
 @code
 {
 	private User UserDetails { get; set; } = new User();
 	private List<Project> Projects { get; set; } = new List<Project>();
+
+	private string DisplayType = "gantt";
+
+	private List<GanttChartObject> GanttChartObjects { get; set; } = new List<GanttChartObject>();
 
 	protected override async void OnInitialized()
 	{
@@ -54,6 +128,8 @@
 		{
 			Projects = await httpClient.GetFromJsonAsync<List<Project>>($"/api/Project/GetUserProjects?UserId={UserDetails.Id}");
 
+			GanttChartObjects = new List<GanttChartObject>();
+			Projects.ForEach(p => GanttChartObjects.Add(new GanttChartObject(p)));
 		}
 		catch
 		{
@@ -61,5 +137,48 @@
 		}
 
 		StateHasChanged();
+	}
+
+	private Modal modal;
+	private string errorMessage = "";
+	private Project NewProjectDetails = new Project();
+
+	private void OpenNewProject()
+	{
+		errorMessage = "";
+		modal.Open();
+	}
+
+	private async void AddProject()
+	{
+		if (string.IsNullOrWhiteSpace(NewProjectDetails.Name))
+		{
+			errorMessage = "Name cannot be blank!";
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(NewProjectDetails.Description))
+		{
+			errorMessage = "Description cannot be blank!";
+			return;
+		}
+
+		ProjectAndUser NewProject = new ProjectAndUser(UserDetails.Id, NewProjectDetails);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<ProjectAndUser>("/api/Project/CreateProject", NewProject);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			errorMessage = "Something went wrong";
+			return;
+		}
+		else if (success.Success == false)
+		{
+			errorMessage = success.Message;
+			return;
+		}
+
+		modal.Close();
+		LoadUserProjects();
 	}
 }
