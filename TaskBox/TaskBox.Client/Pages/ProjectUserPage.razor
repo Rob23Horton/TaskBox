@@ -1,0 +1,45 @@
+﻿@page "/project-user-page/{Id}"
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{base.BuildRenderTree(__builder);}
+
+<h1>Project User Page</h1>
+
+<div>
+
+</div>
+
+@code
+{
+    public string Id{
+        get{
+            return ProjectId.ToString();
+        }
+        set{
+            int.TryParse(value, out int id);
+            this.ProjectId = id;
+        }
+    }
+    private int ProjectId { get; set; }
+    private int UserId { get; set; }
+
+    private List<User> Users { get; set; }
+
+    protected override async void OnInitialized()
+    {
+        UserId = await GetUserId();
+
+        base.OnInitialized();
+    }
+
+    private async void LoadData()
+    {
+        //TODO - Get all user permissions on project
+    }
+
+
+}
