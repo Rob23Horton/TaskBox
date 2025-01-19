@@ -11,7 +11,10 @@
 
 
 <div class="d-flex flex-column page">
-	<h1>@ProjectDetails.Name</h1>
+	<div class="d-grid">
+		<h1 style="grid-column:1;">@ProjectDetails.Name</h1>
+		<button type="button" style="grid-column:2;" @onclick="GoToProjectUserPage">Project Users</button>
+	</div>
 	<div>
 		<span>From @ProjectDetails.Start.ToLongDateString() @ProjectDetails.Start.ToShortTimeString()</span>
 		<span>To @ProjectDetails.Due.ToLongDateString() @ProjectDetails.Due.ToShortTimeString()</span>
@@ -235,5 +238,9 @@
 	private void OnShowModalClick()
 	{
 		modal.Open();
+	}
+
+	private void GoToProjectUserPage(){
+		navManager.NavigateTo($"/project-user-page/{Id}");
 	}
 }

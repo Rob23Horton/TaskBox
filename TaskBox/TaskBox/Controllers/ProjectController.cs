@@ -61,6 +61,52 @@ namespace TaskBox.Controllers
 			}
 		}
 
+		[HttpGet("GetProjectUserPermissions")]
+		[ProducesResponseType(200, Type=typeof(List<ProjectUserPermission>))]
+		[ProducesResponseType(400)]
+		public IActionResult GetUserPermissionssFromProject(int ProjectId)
+		{
+			try
+			{
+				return Ok(_projectRepository.GetPermissionsForProject(ProjectId));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
+		[HttpPost("CreateUserPermission")]
+		[ProducesResponseType(200, Type = typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult CreateUserPermission(PermissionAndUser PermissionAndUser)
+		{
+			try
+			{
+				return Ok(_projectRepository.CreateUserPermission(PermissionAndUser.UserId, PermissionAndUser.Permission));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
+		[HttpPost("UpdateUserPermission")]
+		[ProducesResponseType(200, Type = typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult UpdateUserPermission(PermissionAndUser PermissionAndUser)
+		{
+			try
+			{
+				return Ok(_projectRepository.UpdateUserPermission(PermissionAndUser.UserId, PermissionAndUser.Permission));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
+
 		[HttpPost("CreateProject")]
 		[ProducesResponseType(200, Type=typeof(ApiResponse))]
 		[ProducesResponseType(400)]

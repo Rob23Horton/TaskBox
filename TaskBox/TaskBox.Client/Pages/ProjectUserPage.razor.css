@@ -1,0 +1,21 @@
+﻿
+.bttm-margin{
+	margin-bottom: 1vh;
+}
+
+th, td{
+	border: 1px solid black;
+}
+
+.project-user-label{
+	grid-column: 1;
+}
+
+.add-user-button{
+	grid-column: 2;
+	justify-self: right;
+}
+
+	.add-user-button > button {
+		width: 20vw;
+	}

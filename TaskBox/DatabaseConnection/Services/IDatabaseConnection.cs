@@ -14,5 +14,6 @@ namespace DatabaseConnection.Services
 		public void Insert<T>(InsertRequest request, T insertData);
 		public void Update(UpdateRequest request);
 		public void Update<T>(UpdateRequest request, T updateData);
+		public void Delete(DeleteRequest request);
 	}
 }

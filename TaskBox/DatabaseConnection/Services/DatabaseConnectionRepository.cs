@@ -432,5 +432,18 @@ namespace DatabaseConnection.Services
 
 			DisconnectFromDatabase();
 		}
+
+		public void Delete(DeleteRequest request)
+		{
+			string query = $"DELETE FROM {request.Table} WHERE ({request.ColumnName} = {request.Id});";
+
+			if (ConnectToDatabase() == false)
+				return;
+
+			MySqlCommand cmd = new MySqlCommand(query, _connection);
+			cmd.ExecuteNonQuery();
+
+			DisconnectFromDatabase();
+		}
 	}
 }
