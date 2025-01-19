@@ -1,0 +1,224 @@
+﻿@page "/project-user-page/{Id}"
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+@{base.BuildRenderTree(__builder);}
+
+<div>
+    <h1>Project User Page</h1>
+    <div class="d-grid bttm-margin">
+        <div class="project-user-label">
+            <label>User Permissions -</label>
+        </div>
+        <div class="add-user-button">
+            @if (CurrentUserPermission.Permission.ToUpper() == "A")
+            {
+                <button type="button" @onclick="AddPermission">Add User</button>
+            }
+        </div>
+    </div>
+    <table class="w-100">
+        <tr>
+            <th>Name</th>
+            <th>Permission</th>
+            @if (CurrentUserPermission.Permission.ToUpper() == "A")
+            {
+                <th>Edit</th>
+            }
+        </tr>
+        @foreach (ProjectUserPermission permission in Permissions)
+        {
+            <tr>
+                <td>@permission.UserName</td>
+                <td>@PermissionTypes.GetValueOrDefault(@permission.Permission.ToUpper())</td>
+
+                @if (CurrentUserPermission.Permission.ToUpper() == "A")
+                {
+                    if (permission.UserCode == UserId)
+                    {
+                        <td></td>
+                    }
+                    else
+                    {
+                        <td><button type="button" @onclick="@(() => EditPermission(permission))">Edit</button></td>
+                    }
+                }
+            </tr>
+        }
+    </table>
+
+</div>
+
+
+<Modal @ref="modal">
+    <Title>@EditOrCreate Permission</Title>
+    <Body>
+        <div class="d-flex flex-column">
+            <div class="w-100 bttm-margin">
+                @if (EditOrCreate == "Create")
+                {
+                    @if (Permissions.Where(p => p.UserCode == NewPermission.UserCode).Count() > 0)
+                    {
+                        <label class="alert alert-danger w-100" role="alert">User Already has a permission level!</label>
+                    }
+
+
+                    <InputNumber class="form-control" @bind-Value="@NewPermission.UserCode" @bind-Value:after="modal.Refresh" />
+
+                }
+                else
+                {
+                    <label>@NewPermission.UserName (User Id - @NewPermission.UserCode)</label>
+                }
+            </div>
+            <div>
+                <InputSelect class="form-select" @bind-Value="@NewPermission.Permission">
+                    @foreach (KeyValuePair<string, string> permissionType in PermissionTypes)
+                    {
+                        <option value="@permissionType.Key">@permissionType.Value</option>
+                    }
+                    @if (EditOrCreate == "Edit")
+                    {
+                        <option value="N">None</option>
+                    }
+                </InputSelect>
+            </div>
+            <div>
+                <label>@errorMessage</label>
+            </div>
+        </div>
+    </Body>
+    <Footer>
+        <div>
+            <button type="button" class="btn btn-success" @onclick="SavePermission">@EditOrCreate</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+        </div>
+    </Footer>
+</Modal>
+
+@code
+{
+    [Parameter]
+    public string Id{
+        get{
+            return ProjectId.ToString();
+        }
+        set{
+            int.TryParse(value, out int id);
+            this.ProjectId = id;
+        }
+    }
+    private int ProjectId { get; set; }
+    private int UserId { get; set; }
+
+    private ProjectUserPermission CurrentUserPermission { get; set; } = new ProjectUserPermission();
+    private List<ProjectUserPermission> Permissions { get; set; } = new List<ProjectUserPermission>();
+
+    private Dictionary<string, string> PermissionTypes = new Dictionary<string, string>(){ { "A","Admin" }, { "M","Project Manager" }, { "S","Segment Manager" }, { "T","Task Manager" }, { "V", "Viewer"} };
+
+    protected override async void OnInitialized()
+    {
+        UserId = await GetUserId();
+        CurrentUserPermission.Permission = "V";
+
+        try
+        {
+            bool? permission = await httpClient.GetFromJsonAsync<bool>($"/api/Project/CheckPermission?UserId={UserId}&ProjectId={ProjectId}");
+            if (permission is null || permission == false)
+            {
+                navManager.NavigateTo("/access-denied");
+            }
+            else
+            {
+                LoadData();
+            }
+        }
+        catch{
+
+        }
+
+
+        base.OnInitialized();
+    }
+
+    private async void LoadData()
+    {
+        //Gets all user permissions on project
+        Permissions = await httpClient.GetFromJsonAsync<List<ProjectUserPermission>>($"/api/Project/GetProjectUserPermissions?ProjectId={ProjectId}");
+
+        try
+        {
+            CurrentUserPermission = Permissions.Where(p => p.UserCode == UserId).First();
+        }
+        catch
+        {
+
+        }
+
+        StateHasChanged();
+    }
+
+    private Modal modal;
+    private string errorMessage = "";
+    private string EditOrCreate = "Create";
+    private ProjectUserPermission NewPermission = new ProjectUserPermission();
+
+    private void AddPermission()
+    {
+        EditOrCreate = "Create";
+        NewPermission = new ProjectUserPermission();
+
+        modal.Open();
+    }
+
+    private void EditPermission(ProjectUserPermission Permission)
+    {
+        EditOrCreate = "Edit";
+        NewPermission = new ProjectUserPermission(Permission);
+
+        modal.Open();
+    }
+
+    private async void SavePermission()
+    {
+        //Saves permission to server
+
+        ApiResponse? success = null;
+
+        if (EditOrCreate == "Edit")
+        {
+            PermissionAndUser newPermission = new PermissionAndUser(NewPermission, UserId);
+
+            HttpResponseMessage response = await httpClient.PostAsJsonAsync<PermissionAndUser>("/api/Project/UpdateUserPermission", newPermission);
+            success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+        }
+
+        else if (EditOrCreate == "Create")
+        {
+            NewPermission.ProjectCode = ProjectId;
+
+            PermissionAndUser newPermission = new PermissionAndUser(NewPermission, UserId);
+
+            HttpResponseMessage response = await httpClient.PostAsJsonAsync<PermissionAndUser>("/api/Project/CreateUserPermission", newPermission);
+            success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+        }
+
+        if (success is null)
+        {
+            errorMessage = "Something went wrong. Please try again later!";
+            return;
+        }
+        else if (success.Success == false)
+        {
+            errorMessage = success.Message;
+            return;
+        }
+
+        modal.Close();
+        LoadData();
+        StateHasChanged();
+    }
+}

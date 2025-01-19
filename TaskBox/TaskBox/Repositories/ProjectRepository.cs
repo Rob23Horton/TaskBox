@@ -195,5 +195,98 @@ namespace TaskBox.Repositories
 			response.Success = true;
 			return response;
 		}
+
+		public List<ProjectUserPermission> GetPermissionsForProject(int ProjectId)
+		{
+			SelectRequest permissionsRequest = new SelectRequest("tblProjectUser");
+
+			permissionsRequest.AddData("tblProjectUser", "ProjectUserId", "Id");
+			permissionsRequest.AddData("tblUser", "UserName");
+			permissionsRequest.AddData("UserCode");
+			permissionsRequest.AddData("ProjectCode");
+			permissionsRequest.AddData("Permission");
+
+			permissionsRequest.AddJoin("tblProjectUser", "UserCode", "tblUser", "UserId");
+
+			permissionsRequest.AddWhere("ProjectCode", ProjectId);
+
+			List<ProjectUserPermission> permissions = _databaseConnection.Select<ProjectUserPermission>(permissionsRequest);
+
+			return permissions;
+		}
+
+		public ApiResponse CreateUserPermission(int UserId, ProjectUserPermission Permission)
+		{
+			ApiResponse response = new ApiResponse();
+
+			ProjectUserPermission creatorUserPermission = GetProjectUserPermission(UserId, Permission.ProjectCode);
+			
+			if (creatorUserPermission.Permission.ToUpper() != "A")
+			{
+				response.Success = false;
+				response.Message = "User doesn't have the permissions for this";
+				return response;
+			}
+
+			ProjectUserPermission newUserPermission = GetProjectUserPermission(Permission.UserCode, Permission.ProjectCode);
+
+			if (newUserPermission.Permission.ToUpper() != "N")
+			{
+				response.Success = false;
+				response.Message = "New User is already has permissions for this project";
+				return response;
+			}
+
+			InsertRequest permissionInsert = new InsertRequest("tblProjectUser");
+
+			_databaseConnection.Insert<ProjectUserPermission>(permissionInsert, Permission);
+
+			response.Success = true;
+			return response;
+		}
+
+		public ApiResponse UpdateUserPermission(int UserId, ProjectUserPermission Permission)
+		{
+			ApiResponse response = new ApiResponse();
+
+			ProjectUserPermission creatorUserPermission = GetProjectUserPermission(UserId, Permission.ProjectCode);
+
+			if (creatorUserPermission.Permission.ToUpper() != "A")
+			{
+				response.Success = false;
+				response.Message = "You doesn't have the permissions for this";
+				return response;
+			}
+
+			ProjectUserPermission newUserPermission = GetProjectUserPermission(Permission.UserCode, Permission.ProjectCode);
+
+			if (newUserPermission.Permission.ToUpper() == "N")
+			{
+				response.Success = false;
+				response.Message = "User doesn't have any permissions for this project.";
+				return response;
+			}
+
+			if (Permission.Permission == "N")
+			{
+				//Deletes the permission due to the user selecting the user to have permission level of 'NONE'
+				DeleteRequest deletePermission = new DeleteRequest("tblProjectUser", "ProjectUserId", Permission.Id);
+
+				_databaseConnection.Delete(deletePermission);
+			}
+			else
+			{
+				//Only allows to change the permission value
+				UpdateRequest updatePermission = new UpdateRequest("tblProjectUser");
+				updatePermission.AddData("Permission", Permission.Permission);
+
+				updatePermission.AddWhere("ProjectUserId", Permission.Id);
+
+				_databaseConnection.Update(updatePermission);
+			}
+
+			response.Success = true;
+			return response;
+		}
 	}
 }
