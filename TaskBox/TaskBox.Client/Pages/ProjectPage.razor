@@ -11,10 +11,7 @@
 
 
 <div class="d-flex flex-column page">
-	<div class="d-grid">
-		<h1 style="grid-column:1;">@ProjectDetails.Name</h1>
-		<button type="button" style="grid-column:2;" @onclick="GoToProjectUserPage">Project Users</button>
-	</div>
+	<h1 style="grid-column:1;">@ProjectDetails.Name</h1>
 	<div>
 		<span>From @ProjectDetails.Start.ToLongDateString() @ProjectDetails.Start.ToShortTimeString()</span>
 		<span>To @ProjectDetails.Due.ToLongDateString() @ProjectDetails.Due.ToShortTimeString()</span>
@@ -25,6 +22,12 @@
 			@ProjectDetails.Description
 		</span>
 	</div>
+
+	<div class="d-grid bttm-margin">
+		<button type="button" style="grid-column:1;" @onclick="GoToProjectUserPage">Project Users</button>
+		<button type="button" style="grid-column:3;" @onclick="GoToProjectTasksPage">All Tasks</button>
+	</div>
+
 	<div class="d-grid bttm-margin">
 		<div class="segment-label-container">
 			<label>Segements - </label>
@@ -69,7 +72,7 @@
 	<Footer>
 		<div>
 			<button type="button" class="btn btn-success" @onclick="AddSegment">Create</button>
-			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => {NewSegmentDetails=new Segment();modal.Close();}">Cancel</button>
 		</div>
 	</Footer>
 </Modal>
@@ -168,6 +171,8 @@
 
 	private async void AddSegment()
 	{
+		errorMessage = "";
+
 		NewSegmentDetails.OwnerProject = Id;
 
 		//Validation on Modal
@@ -237,10 +242,19 @@
 
 	private void OnShowModalClick()
 	{
+		NewSegmentDetails = new Segment();
+		NewSegmentDetails.Start = ProjectDetails.Start;
+		NewSegmentDetails.Due = ProjectDetails.Due;
+
 		modal.Open();
 	}
 
-	private void GoToProjectUserPage(){
+	private void GoToProjectUserPage()
+	{
 		navManager.NavigateTo($"/project-user-page/{Id}");
+	}
+	private void GoToProjectTasksPage()
+	{
+		navManager.NavigateTo($"/project-tasks-page/{Id}");
 	}
 }

@@ -69,7 +69,7 @@
 	<Footer>
 		<div>
 			<button type="button" class="btn btn-success" @onclick="AddTask">Create</button>
-			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => {NewTaskDetails=new TaskBoxTask();modal.Close();}">Cancel</button>
 		</div>
 	</Footer>
 </Modal>
@@ -165,11 +165,18 @@
 
 	private void ShowModal()
 	{
+		errorMessage = "";
+		NewTaskDetails = new TaskBoxTask();
+		NewTaskDetails.Start = SegmentDetails.Start;
+		NewTaskDetails.Due = SegmentDetails.Due;
+
 		modal.Open();
 	}
 
 	private async void AddTask()
 	{
+		errorMessage = "";
+
 		NewTaskDetails.SegmentCode = Id;
 
 		//Validation on Modal

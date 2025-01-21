@@ -127,6 +127,13 @@ namespace TaskBox.Repositories
 				segmentsRequest.AddData("tblSegment", "Due");
 				segmentsRequest.AddData("tblNote", "Description");
 
+				//Adds bugs number
+				SelectRequest bugRequest = new SelectRequest("tblBug");
+				bugRequest.AddData("BugId");
+				bugRequest.AddWhere("SegmentCode", new AnotherTableValue("tblSegment", "SegmentId"));
+				bugRequest.AddWhere("Completed", false);
+				segmentsRequest.AddData(Functions.Count, bugRequest, "BugNumber");
+
 				segmentsRequest.AddJoin("tblSegment", "NoteCode", "tblNote", "NoteId");
 
 				segmentsRequest.AddWhere("tblSegment", "ProjectCode", ProjectId);
