@@ -172,5 +172,63 @@ namespace TaskBox.Repositories
 				return new List<TaskBoxTask>();
 			}
 		}
+
+		public ApiResponse UpdateTask(int UserId, TaskBoxTask Task)
+		{
+			ApiResponse response = new ApiResponse();
+
+			//Check user has permission to create segments (A or M)
+			ProjectUserPermission userPermission = _segmentRepository.UserSegmentPermission(Task.SegmentCode, UserId);
+			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M" && userPermission.Permission.ToUpper() != "S")
+			{
+				response.Success = false;
+				response.Message = "User doesn't have the permissions for this";
+				return response;
+			}
+
+			//Gets Parent Project Start/End Dates
+			Segment parentSegment = _segmentRepository.GetSegmentFromId(Task.SegmentCode);
+
+			if (Task.Start < parentSegment.Start)
+			{
+				response.Success = false;
+				response.Message = "Task start date cannot be before segment date!";
+				return response;
+			}
+			else if (Task.Due > parentSegment.Due)
+			{
+				response.Success = false;
+				response.Message = "Task end date cannot be after segment date!";
+				return response;
+			}
+
+			//Gets note code
+			SelectRequest noteRequest = new SelectRequest("tblNote");
+			noteRequest.AddData("tblNote", "NoteId", "Id");
+			noteRequest.AddJoin("tblNote", "NoteId", "tblTask", "NoteCode");
+			noteRequest.AddWhere("tblTask", "TaskId", Task.Id);
+			Note note = _databaseConnection.Select<Note>(noteRequest)[0];
+
+			//Updates Note
+			note.Description = Task.Description;
+			UpdateRequest noteUpdate = new UpdateRequest("tblNote");
+			noteUpdate.AddWhere("NoteId", note.Id);
+
+			_databaseConnection.Update<Note>(noteUpdate, note);
+
+
+			//Updates Segment
+			UpdateRequest taskInsert = new UpdateRequest("tblTask");
+			taskInsert.AddData("Name", Task.Name);
+			taskInsert.AddData("Start", Task.Start);
+			taskInsert.AddData("Due", Task.Due);
+
+			taskInsert.AddWhere("TaskId", Task.Id);
+
+			_databaseConnection.Update(taskInsert);
+
+			response.Success = true;
+			return response;
+		}
 	}
 }

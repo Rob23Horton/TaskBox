@@ -66,6 +66,21 @@ namespace TaskBox.Controllers
 			}
 		}
 
+		[HttpPost("UpdateSegment")]
+		[ProducesResponseType(200, Type=typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult UpdateSegment(SegmentAndUser SegmentAndUser)
+		{
+			try
+			{
+				return Ok(_segmentRepository.UpdateSegment(SegmentAndUser.UserId, SegmentAndUser.Segment));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
+
 		[HttpGet("CheckPermission")]
 		[ProducesResponseType(200, Type=typeof(bool))]
 		[ProducesResponseType(400, Type = typeof(bool))]

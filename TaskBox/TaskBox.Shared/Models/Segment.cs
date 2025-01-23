@@ -9,6 +9,20 @@ namespace TaskBox.Shared.Models
 {
 	public class Segment : GanttChartObject
 	{
+		public Segment()
+		{
+			
+		}
+
+		public Segment(Segment Segment) : base(Segment)
+		{
+			this.Id = Segment.Id;
+			this.OwnerProject = Segment.OwnerProject;
+			this.OwnerProjectName = Segment.OwnerProjectName;
+			this.BugNumber = Segment.BugNumber;
+		}
+
+
 		[InsertIgnore]
 		public override int Id { get; set; }
 		public int OwnerProject { get; set; }
