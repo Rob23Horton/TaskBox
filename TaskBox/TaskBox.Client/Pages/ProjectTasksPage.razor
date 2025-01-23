@@ -143,6 +143,8 @@
 			return;
 		}
 
+		StateHasChanged();
+
 		foreach (Segment segment in segmentData)
 		{
 			List<TaskBoxTask>? taskData = await httpClient.GetFromJsonAsync<List<TaskBoxTask>>($"/api/Task/TasksFromSegmentId?SegmentId={segment.Id}");
@@ -155,8 +157,6 @@
 			Segments.Add(segment);
 			Tasks.AddRange(taskData);
 		}
-
-		Console.WriteLine("Loaded Finished");
 
 		//Creates ShowSegments
 		ShowSegments = new bool[Segments.Count()];
@@ -196,8 +196,6 @@
 			List<TaskBoxTask> tasksToDelete = SegmentTasks.Where(st => CurrentTasks.Select(ct => ct.Id).Contains(st.Id)).ToList();
 			CurrentTasks.RemoveAll(ct => tasksToDelete.Select(t => t.Id).Contains(ct.Id));
 		}
-
-		Console.WriteLine("Updated Gantt Chart");
 
 		StateHasChanged();
 	}

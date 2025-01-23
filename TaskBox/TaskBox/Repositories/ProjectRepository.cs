@@ -1,5 +1,6 @@
 ﻿using DatabaseConnection.Models;
 using DatabaseConnection.Services;
+using System.Security;
 using TaskBox.Interfaces;
 using TaskBox.Shared.Models;
 
@@ -284,6 +285,47 @@ namespace TaskBox.Repositories
 
 				_databaseConnection.Update(updatePermission);
 			}
+
+			response.Success = true;
+			return response;
+		}
+
+		public ApiResponse UpdateProject(int UserId, Project Project)
+		{
+			ApiResponse response = new ApiResponse();
+
+			ProjectUserPermission userPermission = GetProjectUserPermission(UserId, Project.Id);
+			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M")
+			{
+				response.Success = false;
+				response.Message = "User doesn't have any permissions for this project.";
+				return response;
+			}
+
+			//Gets note code
+			SelectRequest noteRequest = new SelectRequest("tblNote");
+			noteRequest.AddData("tblNote", "NoteId", "Id");
+			noteRequest.AddJoin("tblNote", "NoteId", "tblProject", "NoteCode");
+			noteRequest.AddWhere("tblProject", "ProjectId", Project.Id);
+			Note note = _databaseConnection.Select<Note>(noteRequest)[0];
+
+			//Updates Note
+			note.Description = Project.Description;
+			UpdateRequest noteInsert = new UpdateRequest("tblNote");
+			noteInsert.AddWhere("NoteId", note.Id);
+
+			_databaseConnection.Update<Note>(noteInsert, note);
+
+
+			//Updates Project
+			UpdateRequest projectInsert = new UpdateRequest("tblProject");
+			projectInsert.AddData("Name", Project.Name);
+			projectInsert.AddData("Start", Project.Start);
+			projectInsert.AddData("Due", Project.Due);
+
+			projectInsert.AddWhere("ProjectId", Project.Id);
+
+			_databaseConnection.Update(projectInsert);
 
 			response.Success = true;
 			return response;
