@@ -1,0 +1,202 @@
+﻿@page "/project-tasks-page/{ProjectId}"
+
+
+@inject NavigationManager navManager;
+@inject HttpClient httpClient;
+
+@inherits BaseLoggedInPage;
+
+<div class="d-flex flex-column">
+	<h1 style="grid-column:1;"><a href="/project-page/@ProjectDetails.Id">@ProjectDetails.Name</a></h1>
+	<div>
+		<span>From @ProjectDetails.Start.ToLongDateString() @ProjectDetails.Start.ToShortTimeString()</span>
+		<span>To @ProjectDetails.Due.ToLongDateString() @ProjectDetails.Due.ToShortTimeString()</span>
+	</div>
+
+	<div class="description-container bttm-margin">
+		<span style="white-space: pre-line">
+			@ProjectDetails.Description
+		</span>
+	</div>
+	<div class="bttm-margin">
+		<button type="button" style="width: 20vw;" @onclick="@(() => modal.Open())">Show Bugs</button>
+	</div>
+	<div class="d-grid bttm-margin" style="column-count:5;">
+		@for (int i = 0; i < Segments.Count(); i++)
+		{
+			int localI = i;
+			int gridPosition = (i % 5) + 1;
+
+			<div style="grid-column: @((MarkupString)gridPosition.ToString());">
+				<label for="segment-@localI">@Segments[i].Name</label>
+				<input type="checkbox" id="segment-@localI" checked="@ShowSegments[localI]" @bind-value="@ShowSegments[localI]" @bind-value:after="UpdateGanttChart">
+			</div>
+		}
+	</div>
+	<div class="bttm-margin">
+		<label>Tasks - </label>
+	</div>
+	<div>
+		<GanttChart
+		ClickUrl="/task-page/"
+		Frequency="1"
+		Items="@CurrentTasks"
+		></GanttChart>
+	</div>
+</div>
+
+<Modal @ref="modal">
+	<Title>Segment Bugs</Title>
+	<Body>
+		<table class="w-100">
+			<tr>
+				<th class="table-data">Name</th>
+				<th class="table-data">Bug Number</th>
+			</tr>
+			@foreach (Segment segment in Segments.OrderByDescending(s => s.BugNumber))
+			{
+				<tr>
+					<td class="table-data"><a href="/bug-page/@segment.Id">@segment.Name</a></td>
+					<td class="table-data">@segment.BugNumber</td>
+				</tr>
+			}
+		</table>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Close</button>
+		</div>
+	</Footer>
+</Modal>
+
+@code
+{
+	[Parameter]
+	public string ProjectId
+	{
+		get
+		{
+			return this.Id.ToString();
+		}
+		set
+		{
+			int.TryParse(value, out int id);
+			this.Id = id;
+		}
+	}
+	private int Id { get; set; }
+	private int UserId { get; set; }
+
+	private Project ProjectDetails { get; set; } = new Project();
+	private List<Segment> Segments { get; set; } = new List<Segment>();
+	private List<TaskBoxTask> Tasks { get; set; } = new List<TaskBoxTask>();
+
+	private List<GanttChartObject> CurrentTasks { get; set; } = new List<GanttChartObject>();
+	bool[] ShowSegments { get; set; } = new bool[1];
+
+	private Modal modal;
+
+	protected override async void OnInitialized()
+	{
+		UserId = await GetUserId();
+
+		try
+		{
+			bool? permission = await httpClient.GetFromJsonAsync<bool>($"/api/Project/CheckPermission?UserId={UserId}&ProjectId={ProjectId}");
+			if (permission is null || permission == false)
+			{
+				navManager.NavigateTo("/access-denied");
+			}
+			else
+			{
+				LoadData();
+			}
+		}
+		catch
+		{
+
+		}
+
+
+		base.OnInitialized();
+	}
+
+	private async void LoadData()
+	{
+		Segments = new List<Segment>();
+		Tasks = new List<TaskBoxTask>();
+
+		Project? projectData = await httpClient.GetFromJsonAsync<Project>($"/api/Project/GetProject?ProjectId={Id}");
+
+		if (projectData is null)
+		{
+			navManager.NavigateTo("/not-existant");
+			return;
+		}
+		ProjectDetails = projectData;
+
+		List<Segment>? segmentData = await httpClient.GetFromJsonAsync<List<Segment>>($"/api/Segment/SegmentsFromProjectId?ProjectId={Id}");
+
+		if (segmentData is null)
+		{
+			navManager.NavigateTo("/not-existant");
+			return;
+		}
+
+		StateHasChanged();
+
+		foreach (Segment segment in segmentData)
+		{
+			List<TaskBoxTask>? taskData = await httpClient.GetFromJsonAsync<List<TaskBoxTask>>($"/api/Task/TasksFromSegmentId?SegmentId={segment.Id}");
+
+			if (taskData is null)
+			{
+				continue;
+			}
+
+			Segments.Add(segment);
+			Tasks.AddRange(taskData);
+		}
+
+		//Creates ShowSegments
+		ShowSegments = new bool[Segments.Count()];
+		for (int i = 0; i < ShowSegments.Length; i++)
+		{
+			ShowSegments[i] = true;
+		}
+
+		CurrentTasks = new List<GanttChartObject>();
+
+		foreach (TaskBoxTask task in Tasks)
+		{
+			CurrentTasks.Add(new GanttChartObject(task));
+		}
+
+		StateHasChanged();
+	}
+
+	private void UpdateGanttChart()
+	{
+		for (int i = 0; i < Segments.Count(); i++)
+		{
+			List<TaskBoxTask> SegmentTasks = Tasks.Where(t => t.SegmentCode == Segments[i].Id).ToList();
+
+			//Adds any tasks that are missing
+			if (ShowSegments[i])
+			{
+				//Gets the tasks that haven't been added yet
+				List<TaskBoxTask> tasksToAdd = SegmentTasks.Where(st => !CurrentTasks.Select(ct => ct.Id).Contains(st.Id)).ToList();
+
+				//Adds these tasks to Current Task
+				tasksToAdd.ForEach(t => CurrentTasks.Add(new GanttChartObject(t)));
+				continue;
+			}
+
+			//Removes any tasks that are existing
+			List<TaskBoxTask> tasksToDelete = SegmentTasks.Where(st => CurrentTasks.Select(ct => ct.Id).Contains(st.Id)).ToList();
+			CurrentTasks.RemoveAll(ct => tasksToDelete.Select(t => t.Id).Contains(ct.Id));
+		}
+
+		StateHasChanged();
+	}
+}

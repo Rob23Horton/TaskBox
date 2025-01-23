@@ -1,0 +1,16 @@
+﻿
+td, th{
+	border: 1px solid black;
+}
+
+.bttm-margin{
+	margin-bottom: 1vh;
+}
+
+.description-container {
+	min-height: 15vh;
+}
+
+.table-data{
+	padding-left:10px;
+}

@@ -56,11 +56,11 @@
 		</div>
 
 		<Modal @ref="modal">
-			<Title>Create Segment</Title>
+			<Title>Create Project</Title>
 			<Body>
 				<div class="d-flex flex-column">
 					<div class="w-100">
-						<InputText class="w-100" placeholder="Segment Name (Max 24 chars)" maxlength="24" @bind-Value="@NewProjectDetails.Name" />
+						<InputText class="w-100" placeholder="Project Name (Max 24 chars)" maxlength="24" @bind-Value="@NewProjectDetails.Name" />
 					</div>
 					<div class="w-100">
 						<InputTextArea class="w-100" placeholder="Description" @bind-Value="@NewProjectDetails.Description" />
@@ -161,6 +161,11 @@
 			errorMessage = "Description cannot be blank!";
 			return;
 		}
+		else if (NewProjectDetails.Start > NewProjectDetails.Due)
+		{
+			errorMessage = "Due date cannot be before start date!";
+			return;
+		}
 
 		ProjectAndUser NewProject = new ProjectAndUser(UserDetails.Id, NewProjectDetails);
 
@@ -177,6 +182,8 @@
 			errorMessage = success.Message;
 			return;
 		}
+
+		NewProjectDetails = new Project();
 
 		modal.Close();
 		LoadUserProjects();

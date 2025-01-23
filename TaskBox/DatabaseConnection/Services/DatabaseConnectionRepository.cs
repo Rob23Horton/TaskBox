@@ -133,7 +133,7 @@ namespace DatabaseConnection.Services
 
 						if (where.Value is string strVal)
 						{
-							currentQuery += $"'{strVal}' AND ";
+							currentQuery += $"'{MySqlHelper.EscapeString(strVal)}' AND ";
 						}
 						else if (where.Value is int intVal)
 						{
@@ -182,7 +182,7 @@ namespace DatabaseConnection.Services
 
 					if (where.Value is string strVal)
 					{
-						query += $"'{strVal}' AND ";
+						query += $"'{MySqlHelper.EscapeString(strVal)}' AND ";
 					}
 					else if (where.Value is int intVal)
 					{
@@ -266,7 +266,7 @@ namespace DatabaseConnection.Services
 
 				if (value is string strVal)
 				{
-					values += $"'{strVal}', ";
+					values += $"'{MySqlHelper.EscapeString(strVal)}', ";
 				}
 				else if (value is int intVal)
 				{
@@ -316,7 +316,7 @@ namespace DatabaseConnection.Services
 
 				if (value is string strVal)
 				{
-					values += $"'{strVal}', ";
+					values += $"'{MySqlHelper.EscapeString(strVal)}', ";
 				}
 				else if (value is int intVal)
 				{
@@ -357,7 +357,7 @@ namespace DatabaseConnection.Services
 
 				if (Value.Value is string strVal)
 				{
-					queryValues += $"'{strVal}', ";
+					queryValues += $"'{MySqlHelper.EscapeString(strVal)}', ";
 				}
 				else if (Value.Value is int intVal)
 				{
@@ -403,7 +403,7 @@ namespace DatabaseConnection.Services
 
 				if (value is string strVal)
 				{
-					query += $"'{strVal}', ";
+					query += $"'{MySqlHelper.EscapeString(strVal)}', ";
 				}
 				else if (value is int intVal)
 				{

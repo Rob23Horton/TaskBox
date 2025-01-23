@@ -38,6 +38,8 @@
 
 	private async void Create()
 	{
+		errorMessage = "";
+
 		if (string.IsNullOrEmpty(userName)){
 			errorMessage = "User Name must be filled in!";
 			return;

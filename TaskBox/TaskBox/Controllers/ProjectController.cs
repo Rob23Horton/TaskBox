@@ -121,5 +121,20 @@ namespace TaskBox.Controllers
 				return BadRequest();
 			}
 		}
+
+		[HttpPost("UpdateProject")]
+		[ProducesResponseType(200, Type=typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult UpdateProject(ProjectAndUser projectAndUser)
+		{
+			try
+			{
+				return Ok(_projectRepository.UpdateProject(projectAndUser.UserId, projectAndUser.Project));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
 	}
 }

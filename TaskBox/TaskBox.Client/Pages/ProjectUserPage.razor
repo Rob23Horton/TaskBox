@@ -169,6 +169,7 @@
     private void AddPermission()
     {
         EditOrCreate = "Create";
+        errorMessage = "";
         NewPermission = new ProjectUserPermission();
 
         modal.Open();
@@ -177,6 +178,7 @@
     private void EditPermission(ProjectUserPermission Permission)
     {
         EditOrCreate = "Edit";
+        errorMessage = "";
         NewPermission = new ProjectUserPermission(Permission);
 
         modal.Open();
@@ -185,6 +187,7 @@
     private async void SavePermission()
     {
         //Saves permission to server
+        errorMessage = "";
 
         ApiResponse? success = null;
 

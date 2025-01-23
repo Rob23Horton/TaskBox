@@ -5,6 +5,7 @@ namespace TaskBox.Interfaces
 	public interface IProjectRepository
 	{
 		public ApiResponse CreateProject(int UserId, Project Project);
+		public ApiResponse UpdateProject(int UserId, Project Project);
 		public bool CheckProjectPermission(int UserId, int ProjectId);
 		public List<ProjectUserPermission> GetPermissionsForProject(int ProjectId);
 		public ApiResponse CreateUserPermission(int UserId, ProjectUserPermission Permission);

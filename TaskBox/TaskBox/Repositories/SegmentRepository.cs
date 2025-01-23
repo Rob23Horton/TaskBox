@@ -127,6 +127,13 @@ namespace TaskBox.Repositories
 				segmentsRequest.AddData("tblSegment", "Due");
 				segmentsRequest.AddData("tblNote", "Description");
 
+				//Adds bugs number
+				SelectRequest bugRequest = new SelectRequest("tblBug");
+				bugRequest.AddData("BugId");
+				bugRequest.AddWhere("SegmentCode", new AnotherTableValue("tblSegment", "SegmentId"));
+				bugRequest.AddWhere("Completed", false);
+				segmentsRequest.AddData(Functions.Count, bugRequest, "BugNumber");
+
 				segmentsRequest.AddJoin("tblSegment", "NoteCode", "tblNote", "NoteId");
 
 				segmentsRequest.AddWhere("tblSegment", "ProjectCode", ProjectId);
@@ -180,6 +187,64 @@ namespace TaskBox.Repositories
 			}
 
 			return permission;
+		}
+
+		public ApiResponse UpdateSegment(int UserId, Segment Segment)
+		{
+			ApiResponse response = new ApiResponse();
+
+			//Check user has permission to create segments (A or M)
+			ProjectUserPermission userPermission = _projectRepository.GetProjectUserPermission(UserId, Segment.OwnerProject);
+			if (userPermission.Permission.ToUpper() != "A" && userPermission.Permission.ToUpper() != "M" && userPermission.Permission.ToUpper() != "S")
+			{
+				response.Success = false;
+				response.Message = "User doesn't have the permissions for this";
+				return response;
+			}
+
+			//Gets Parent Project Start/End Dates
+			Project parentProject = _projectRepository.GetProject(Segment.OwnerProject);
+
+			if (Segment.Start < parentProject.Start)
+			{
+				response.Success = false;
+				response.Message = "Segment start date cannot be before project date!";
+				return response;
+			}
+			else if (Segment.Due > parentProject.Due)
+			{
+				response.Success = false;
+				response.Message = "Segment end date cannot be after project date!";
+				return response;
+			}
+
+			//Gets note code
+			SelectRequest noteRequest = new SelectRequest("tblNote");
+			noteRequest.AddData("tblNote", "NoteId", "Id");
+			noteRequest.AddJoin("tblNote", "NoteId", "tblSegment", "NoteCode");
+			noteRequest.AddWhere("tblSegment", "SegmentId", Segment.Id);
+			Note note = _databaseConnection.Select<Note>(noteRequest)[0];
+
+			//Updates Note
+			note.Description = Segment.Description;
+			UpdateRequest noteUpdate = new UpdateRequest("tblNote");
+			noteUpdate.AddWhere("NoteId", note.Id);
+
+			_databaseConnection.Update<Note>(noteUpdate, note);
+
+
+			//Updates Segment
+			UpdateRequest segmentInsert = new UpdateRequest("tblSegment");
+			segmentInsert.AddData("Name", Segment.Name);
+			segmentInsert.AddData("Start", Segment.Start);
+			segmentInsert.AddData("Due", Segment.Due);
+
+			segmentInsert.AddWhere("SegmentId", Segment.Id);
+
+			_databaseConnection.Update(segmentInsert);
+
+			response.Success = true;
+			return response;
 		}
 	}
 }

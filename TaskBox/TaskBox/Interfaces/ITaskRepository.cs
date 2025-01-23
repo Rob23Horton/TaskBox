@@ -8,5 +8,6 @@ namespace TaskBox.Interfaces
 		public ProjectUserPermission CheckPermission(int UserId, int TaskId);
 		public List<TaskBoxTask> GetTasksFromSegmentId(int SegmentId);
 		public ApiResponse CreateTask(TaskBoxTask Task, int UserId);
+		public ApiResponse UpdateTask(int UserId, TaskBoxTask Task);
 	}
 }

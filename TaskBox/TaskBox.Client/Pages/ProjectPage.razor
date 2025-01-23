@@ -13,7 +13,7 @@
 <div class="d-flex flex-column page">
 	<div class="d-grid">
 		<h1 style="grid-column:1;">@ProjectDetails.Name</h1>
-		<button type="button" style="grid-column:2;" @onclick="GoToProjectUserPage">Project Users</button>
+		<button type="button" style="grid-column:2;align-self:right;" @onclick="OpenEditingModal">Edit Project</button>
 	</div>
 	<div>
 		<span>From @ProjectDetails.Start.ToLongDateString() @ProjectDetails.Start.ToShortTimeString()</span>
@@ -25,6 +25,12 @@
 			@ProjectDetails.Description
 		</span>
 	</div>
+
+	<div class="d-grid bttm-margin">
+		<button type="button" style="grid-column:1;" @onclick="GoToProjectUserPage">Project Users</button>
+		<button type="button" style="grid-column:3;" @onclick="GoToProjectTasksPage">All Tasks</button>
+	</div>
+
 	<div class="d-grid bttm-margin">
 		<div class="segment-label-container">
 			<label>Segements - </label>
@@ -42,6 +48,37 @@
 		></GanttChart>
 	</div>
 </div>
+
+<Modal @ref="editModal">
+	<Title>Edit Project</Title>
+	<Body>
+		<div class="d-flex flex-column">
+			<div class="w-100">
+				<InputText class="w-100" placeholder="Project Name (Max 24 chars)" maxlength="24" @bind-Value="@EditedProject.Name" />
+			</div>
+			<div class="w-100">
+				<InputTextArea class="w-100" placeholder="Description" @bind-Value="@EditedProject.Description" />
+			</div>
+			<div class="form-control d-flex flex-column">
+				<label>Start Date -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@EditedProject.Start"></InputDate>
+			</div>
+			<div class="form-control d-flex flex-column">
+				<label>Due Date -</label>
+				<InputDate Type="InputDateType.DateTimeLocal" @bind-Value="@EditedProject.Due"></InputDate>
+			</div>
+			<div>
+				<label>@errorMessage</label>
+			</div>
+		</div>
+	</Body>
+	<Footer>
+		<div>
+			<button type="button" class="btn btn-success" @onclick="UpdateProject">Edit</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => {EditedProject=new Project(ProjectDetails);editModal.Close();}">Cancel</button>
+		</div>
+	</Footer>
+</Modal>
 
 <Modal @ref="modal">
 	<Title>Create Segment</Title>
@@ -69,7 +106,7 @@
 	<Footer>
 		<div>
 			<button type="button" class="btn btn-success" @onclick="AddSegment">Create</button>
-			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => modal.Close()">Cancel</button>
+			<button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="() => {NewSegmentDetails=new Segment();modal.Close();}">Cancel</button>
 		</div>
 	</Footer>
 </Modal>
@@ -129,6 +166,7 @@
 		{
 			//Gets the project details from API
 			ProjectDetails = await httpClient.GetFromJsonAsync<Project>($"/api/Project/GetProject?ProjectId={Id}");
+			EditedProject = new Project(ProjectDetails);
 		}
 		catch
 		{
@@ -168,6 +206,8 @@
 
 	private async void AddSegment()
 	{
+		errorMessage = "";
+
 		NewSegmentDetails.OwnerProject = Id;
 
 		//Validation on Modal
@@ -237,10 +277,80 @@
 
 	private void OnShowModalClick()
 	{
+		NewSegmentDetails = new Segment();
+		NewSegmentDetails.Start = ProjectDetails.Start;
+		NewSegmentDetails.Due = ProjectDetails.Due;
+
+		errorMessage = "";
+
 		modal.Open();
 	}
 
-	private void GoToProjectUserPage(){
+	private Modal editModal;
+	private Project EditedProject = new Project();
+
+	private void OpenEditingModal()
+	{
+		errorMessage = "";
+
+		editModal.Open();
+	}
+
+	private async void UpdateProject()
+	{
+		if (string.IsNullOrWhiteSpace(EditedProject.Name))
+		{
+			errorMessage = "Name cannot be blank!";
+			return;
+		}
+		else if (string.IsNullOrWhiteSpace(EditedProject.Description))
+		{
+			errorMessage = "Description cannot be blank!";
+			return;
+		}
+		else if (EditedProject.Start > EditedProject.Due)
+		{
+			errorMessage = "Due date must be after start date!";
+			return;
+		}
+		else if (SegmentDetails.Count(s => s.Start < EditedProject.Start) > 0)
+		{
+			errorMessage = "Start date cannot be after segment's start dates!";
+			return;
+		}
+		else if (SegmentDetails.Count(s => s.Due > EditedProject.Due) > 0)
+		{
+			errorMessage = "Due date cannot be before segment's start dates!";
+			return;
+		}
+
+		ProjectAndUser NewProjectDetails = new ProjectAndUser(UserId, EditedProject);
+
+		HttpResponseMessage response = await httpClient.PostAsJsonAsync<ProjectAndUser>("/api/Project/UpdateProject", NewProjectDetails);
+		ApiResponse? success = await response.Content.ReadFromJsonAsync<ApiResponse>();
+
+		if (success is null)
+		{
+			errorMessage = "Something went wrong";
+			return;
+		}
+		else if (success.Success == false)
+		{
+			errorMessage = success.Message;
+			return;
+		}
+
+		editModal.Close();
+
+		LoadData();
+	}
+
+	private void GoToProjectUserPage()
+	{
 		navManager.NavigateTo($"/project-user-page/{Id}");
+	}
+	private void GoToProjectTasksPage()
+	{
+		navManager.NavigateTo($"/project-tasks-page/{Id}");
 	}
 }

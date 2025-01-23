@@ -78,5 +78,20 @@ namespace TaskBox.Controllers
 				return BadRequest(response);
 			}
 		}
+
+		[HttpPost("UpdateTask")]
+		[ProducesResponseType(200, Type=typeof(ApiResponse))]
+		[ProducesResponseType(400)]
+		public IActionResult UpdateTask(TaskAndUser TaskAndUser)
+		{
+			try
+			{
+				return Ok(_taskRepository.UpdateTask(TaskAndUser.UserId, TaskAndUser.Task));
+			}
+			catch
+			{
+				return BadRequest();
+			}
+		}
 	}
 }
